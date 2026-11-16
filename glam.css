@@ -1,0 +1,86 @@
+/* Рожевий «гламурний» стиль. Вмикається атрибутом data-style="glam" на <html>. */
+:root[data-style=glam]{
+  --bg:#FFE1EF;--surface:#FFFFFF;--surface2:#FFEAF4;--text:#4A0A2E;--muted:#7A0B48;--line:#FFC2DF;
+  --acc:#D4107A!important;--acc2:#D4107A!important;--grad:var(--acc);
+  --pop:#FF9FCF;--deep:#7A0B48;--dot:#FFC2DF;--title:#D4107A;--candy:#FF8CC6;
+  --shadow:0 6px 0 var(--pop);
+  --sans:Nunito,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--serif:Nunito,-apple-system,"Segoe UI",sans-serif;
+  --script:Pacifico,"Snell Roundhand",cursive;
+}
+:root[data-style=glam][data-theme=dark]{
+  --bg:#2A0A1C;--surface:#3D1029;--surface2:#531638;--text:#FFE9F3;--muted:#F7B3D4;--line:#6E1E4A;
+  --pop:#7A0B48;--deep:#12040C;--dot:#3D1029;--title:#FF8CC6;--candy:#B8256F;
+}
+:root[data-style=glam] body{font-weight:600}
+:root[data-style=glam] .classic-only{display:none}
+
+/* фон у горошок */
+:root[data-style=glam] #bg,:root[data-style=glam] #lock,:root[data-style=glam] #page,:root[data-style=glam] #editor,:root[data-style=glam] #drawer,:root[data-style=glam] #breath{background-color:var(--bg);background-image:radial-gradient(circle,var(--dot) 3px,transparent 3.5px);background-size:28px 28px}
+
+/* заголовки */
+:root[data-style=glam] h1,:root[data-style=glam] .pbar h2,:root[data-style=glam] #drawer h2,:root[data-style=glam] #lockT{font-family:var(--script);font-weight:400;line-height:1.3;letter-spacing:0;color:var(--title);text-shadow:none;background:none}
+:root[data-style=glam] .pg h1,:root[data-style=glam] #hTitle{font-size:36px}
+:root[data-style=glam] .t-date{opacity:1;color:var(--muted)}
+:root[data-style=glam] .c-head h2{font-weight:900;font-size:19px}
+:root[data-style=glam] .sub{color:var(--muted)}
+
+/* картки-наліпки */
+:root[data-style=glam] .box,:root[data-style=glam] .more button,:root[data-style=glam] .banner,:root[data-style=glam] .week button,:root[data-style=glam] .group,:root[data-style=glam] .search{background:var(--surface);border:3px solid var(--acc);box-shadow:0 6px 0 var(--pop)}
+:root[data-style=glam] .box{border-radius:28px}
+:root[data-style=glam] .card{border:3px solid var(--acc);box-shadow:0 6px 0 var(--pop);border-radius:24px}
+:root[data-style=glam] .week button{box-shadow:0 4px 0 var(--pop)}
+:root[data-style=glam] .week .on{background:var(--acc)}
+:root[data-style=glam] .hero{background:var(--acc);border:0;box-shadow:0 7px 0 var(--pop)}
+:root[data-style=glam] .hero::after{display:none}
+:root[data-style=glam] .tile{border:2px solid var(--line)}
+:root[data-style=glam] .c-ico,:root[data-style=glam] .more i{background:var(--surface2)}
+:root[data-style=glam] .rb{background:var(--surface);border:3px solid var(--acc);box-shadow:0 4px 0 var(--pop);width:44px;height:44px}
+:root[data-style=glam] .rb.on{background:var(--acc)}
+:root[data-style=glam] .chip{border:2px solid var(--acc);font-weight:800}
+:root[data-style=glam] .chip.on{background:var(--acc);box-shadow:none;border:2px solid var(--acc);padding:0 14px}
+
+/* картка дня */
+:root[data-style=glam] .daily{background:var(--candy);color:var(--text);border:3px solid #fff;border-radius:28px;box-shadow:0 7px 0 var(--acc)}
+:root[data-style=glam] .daily::before{display:none}
+:root[data-style=glam] .daily .st{color:#fff}
+:root[data-style=glam] .d-text{font-family:var(--sans);font-weight:800;text-shadow:none}
+:root[data-style=glam] .d-top b{font-weight:900}
+:root[data-style=glam] .daily .d-open span{background:var(--acc);color:#fff;box-shadow:0 5px 0 var(--deep);animation:none;height:50px;border-radius:25px;font-weight:900;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=glam] .pl{background:#fff;color:#4A0A2E;font-weight:800}
+:root[data-style=glam] .pl i{border-color:#4A0A2E}
+:root[data-style=glam] .daily.eve{background:#7A0B48;color:#fff;box-shadow:0 7px 0 var(--pop)}
+
+/* кнопки й елементи керування */
+:root[data-style=glam] .main-btn,:root[data-style=glam] .quick>button:last-child,:root[data-style=glam] .pillb.pri,:root[data-style=glam] .btn.pri,:root[data-style=glam] #fab{background:var(--acc);box-shadow:0 5px 0 var(--deep);font-weight:900}
+:root[data-style=glam] .main-btn{border-radius:25px;margin-bottom:5px}
+:root[data-style=glam] .pillb,:root[data-style=glam] .ghost,:root[data-style=glam] .btn{font-weight:800}
+:root[data-style=glam] .pillb:not(.pri){border:2px solid var(--acc)}
+:root[data-style=glam] .chk{border:3px solid var(--acc);border-radius:11px;width:30px;height:30px}
+:root[data-style=glam] .t-main span{font-weight:700}
+:root[data-style=glam] .moods button{font-weight:800;color:var(--text)}
+:root[data-style=glam] .moods button.on{background:var(--acc);color:#fff;box-shadow:none}
+:root[data-style=glam] .glasses button,:root[data-style=glam] .glasses button.on{color:var(--acc)}
+:root[data-style=glam] .glasses svg{stroke-width:2.4}
+:root[data-style=glam] .glasses button.on svg{fill:#FF8CC6}
+:root[data-style=glam] .hchips button{border:2px solid var(--line);font-weight:700}
+:root[data-style=glam] .hchips button.on,:root[data-style=glam] .h7 i.on{background:var(--acc);border-color:var(--acc);color:#fff}
+:root[data-style=glam] .bar{height:12px;border-radius:6px}
+:root[data-style=glam] .bar i{border-radius:6px}
+:root[data-style=glam] .inp,:root[data-style=glam] .quick input,:root[data-style=glam] .area,:root[data-style=glam] .field{border:2px solid var(--line);border-radius:16px;font-weight:600}
+:root[data-style=glam] .seg button{font-weight:800}
+:root[data-style=glam] .seg button.on{background:var(--acc);color:#fff;box-shadow:none}
+:root[data-style=glam] .support{background:var(--surface2)}
+:root[data-style=glam] .support p{font-family:var(--sans);font-weight:700}
+:root[data-style=glam] .chart u{background:var(--pop)}
+:root[data-style=glam] .chart .now u{background:var(--acc)}
+
+/* нижня панель і решта */
+:root[data-style=glam] #tabs{background:var(--surface);border-top:3px solid var(--acc);-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=glam] #tabs button{font-weight:800}
+:root[data-style=glam] #tabs button.on{color:var(--title)}
+:root[data-style=glam] #tabs button.on span{background:var(--acc);color:#fff}
+:root[data-style=glam] .pbar{background:var(--bg);-webkit-backdrop-filter:none;backdrop-filter:none}
+:root[data-style=glam] .tools{border-top:3px solid var(--acc)}
+:root[data-style=glam] .sheet{border-top:3px solid var(--acc)}
+:root[data-style=glam] .week .today b,:root[data-style=glam] .ach.got em,:root[data-style=glam] .card .tg,:root[data-style=glam] .card footer .a,:root[data-style=glam] .ib.on,:root[data-style=glam] .dlabel button,:root[data-style=glam] .drow.on{color:var(--title)}
+:root[data-style=glam] .week .on b{color:#fff}

@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="uk">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Нотатки">
+<meta name="theme-color" content="#faf6f3">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" href="icon-180.png">
+<title>Нотатки</title>
+<style>
+:root{--bg:#faf6f3;--surface:#fff;--surface2:#f2ebe6;--text:#2a2224;--muted:#8d8084;--line:#eadfd9;--acc:#e56b8f;--acc2:#f08a5d;--grad:linear-gradient(135deg,var(--acc),var(--acc2));--shadow:0 1px 2px rgba(60,30,40,.05),0 6px 20px rgba(60,30,40,.06);
+  --st:env(safe-area-inset-top,0px);--sb:env(safe-area-inset-bottom,0px);
+  --serif:ui-serif,"New York",Georgia,serif;--sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif}
+:root[data-theme=dark]{--bg:#17131a;--surface:#221c26;--surface2:#2d2632;--text:#f3ecef;--muted:#a3959d;--line:#3a313f;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+[hidden]{display:none!important}
+html,body{height:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--text);font:16px/1.45 var(--sans);-webkit-text-size-adjust:100%;overscroll-behavior:none}
+button,input,select{font:inherit;color:inherit}
+button{border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.ib{width:42px;height:42px;border-radius:14px;display:grid;place-items:center;color:var(--text)}
+.ib:active{background:var(--surface2)}
+.ib.on{color:var(--acc)}.ib.on .ic{fill:currentColor}
+.grow{flex:1}
+
+/* ---------- list ---------- */
+:root{--acc3:color-mix(in srgb,var(--acc) 45%,#7aa8f5);--star:var(--acc);--sky:color-mix(in srgb,var(--acc) 22%,var(--bg))}
+:root[data-theme=dark]{--star:#fff;--sky:#1b1438}
+.bgl{position:absolute;inset:0;overflow:hidden;pointer-events:none;background:var(--bg)}
+.bgl i{position:absolute;display:block}
+.top,.scroll{position:relative;z-index:1}
+.bg-css i{width:95vmax;height:95vmax;border-radius:50%;animation:drift 22s ease-in-out infinite alternate}
+.bg-css i:nth-child(1){background:radial-gradient(circle,color-mix(in srgb,var(--acc) 48%,transparent),transparent 64%);top:-45vmax;right:-45vmax}
+.bg-css i:nth-child(2){background:radial-gradient(circle,color-mix(in srgb,var(--acc2) 42%,transparent),transparent 64%);top:8%;left:-60vmax;animation-duration:28s;animation-direction:alternate-reverse}
+.bg-css i:nth-child(3){background:radial-gradient(circle,color-mix(in srgb,var(--acc3) 42%,transparent),transparent 64%);bottom:-50vmax;right:-35vmax;animation-duration:34s}
+@keyframes drift{to{transform:translate(9vmax,7vmax) scale(1.18)}}
+#gl{position:absolute;inset:0;width:100%;height:100%;display:none}
+.bgl.gl #gl{display:block}.bgl.gl i{display:none}
+#app.night{--bg:#17131a;--surface:#221c26;--surface2:#2d2632;--text:#f3ecef;--muted:#b9acb4;--line:#3a313f;--shadow:0 1px 2px rgba(0,0,0,.3),0 6px 20px rgba(0,0,0,.25);color:var(--text)}
+#app.live h1{text-shadow:0 1px 12px color-mix(in srgb,var(--bg) 60%,transparent)}
+#app.live .sub{color:var(--text);opacity:.78}
+#app.live .card{background:color-mix(in srgb,color-mix(in srgb,var(--c,var(--surface)) 24%,var(--surface)) 86%,transparent);border-color:color-mix(in srgb,var(--text) 10%,transparent)}
+#app.live .search,#app.live .chip:not(.on){background:color-mix(in srgb,var(--surface) 80%,transparent);border-color:color-mix(in srgb,var(--text) 10%,transparent)}
+#app.live .chip.add{color:var(--text)}
+#app.live .empty{color:var(--text)}
+.bgs{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.bgs button{position:relative;height:96px;border-radius:16px;overflow:hidden;border:2px solid var(--line);background:var(--bg) center/cover}
+.bgs button.on{border-color:var(--acc);box-shadow:0 0 0 2px color-mix(in srgb,var(--acc) 30%,transparent)}
+.bgs span{position:absolute;left:6px;right:6px;bottom:6px;padding:3px 0;border-radius:9px;background:color-mix(in srgb,var(--surface) 84%,transparent);font-size:12px;font-weight:600;text-align:center}
+#lock{background:radial-gradient(75% 40% at 100% 0%,color-mix(in srgb,var(--acc) 22%,transparent),transparent 70%),radial-gradient(65% 32% at 0% 14%,color-mix(in srgb,var(--acc2) 17%,transparent),transparent 70%),var(--bg)}
+#list{position:fixed;inset:0;display:flex;flex-direction:column}
+/* ---------- daily card ---------- */
+.daily{position:relative;overflow:hidden;border-radius:26px;padding:18px 18px 16px;margin:0 0 16px;color:#fff;background:var(--grad);box-shadow:0 16px 34px -14px color-mix(in srgb,var(--acc) 75%,transparent);animation:rise .5s cubic-bezier(.2,.8,.2,1) backwards}
+.daily.eve{background:linear-gradient(140deg,#1f1840,#47317a 62%,color-mix(in srgb,var(--acc) 55%,#47317a));box-shadow:0 16px 34px -14px rgba(50,30,110,.75)}
+.daily::before{content:"";position:absolute;right:-50px;top:-70px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.34),transparent 65%)}
+.daily .st{position:absolute;opacity:.75;animation:tw 3.2s ease-in-out infinite}.daily .st .ic{fill:currentColor;stroke:none;width:100%;height:100%;display:block}
+@keyframes tw{50%{opacity:.15;transform:scale(.55) rotate(20deg)}}
+.d-top{display:flex;align-items:center;gap:8px;font-size:12px;position:relative}.d-top .ic{width:20px;height:20px}.d-top b{letter-spacing:.07em;text-transform:uppercase}.d-top span{margin-left:auto;opacity:.85;white-space:nowrap}
+.d-text{font:600 21px/1.35 var(--serif);margin:14px 0 16px;position:relative;text-wrap:pretty;text-shadow:0 1px 2px rgba(0,0,0,.12);transition:filter .6s,opacity .6s}
+.d-act{display:flex;gap:8px;position:relative;transition:opacity .5s .2s}
+.d-act button,.d-open span{display:flex;align-items:center;gap:6px;height:36px;padding:0 14px;border-radius:18px;background:rgba(255,255,255,.24);color:#fff;font-size:14px;font-weight:600;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+.d-act .ic,.d-open .ic{width:16px;height:16px}
+.d-open{display:none}
+.daily.closed .d-text{filter:blur(10px);opacity:.5;-webkit-user-select:none;user-select:none}
+.daily.closed .d-act{opacity:0;pointer-events:none;transition:none}
+.daily.closed .d-open{display:flex;position:absolute;inset:40px 0 0;width:100%;align-items:center;justify-content:center}
+.daily.closed .d-open span{height:44px;padding:0 20px;border-radius:22px;font-size:16px;background:rgba(255,255,255,.3);animation:pulse 2.2s ease-in-out infinite}
+.daily.closed .d-open .ic{fill:currentColor;stroke:none;width:18px;height:18px}
+@keyframes pulse{50%{transform:scale(1.05);background:rgba(255,255,255,.4)}}
+@keyframes rise{from{opacity:0;transform:translateY(14px)}}
+.cards.anim .card{animation:rise .45s cubic-bezier(.2,.8,.2,1) backwards;animation-delay:calc(var(--i,0)*45ms + 80ms)}
+.top{display:flex;align-items:center;padding:calc(var(--st) + 6px) 10px 2px}
+.scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:0 16px calc(var(--sb) + 110px)}
+h1{font:700 32px/1.12 var(--serif);margin:6px 0 4px;letter-spacing:-.01em;text-wrap:balance}
+.sub{margin:0 0 16px;color:var(--muted);font-size:14px}
+.search{display:flex;align-items:center;gap:8px;background:color-mix(in srgb,var(--surface) 80%,transparent);border:1px solid var(--line);border-radius:16px;padding:0 12px;height:46px;color:var(--muted);box-shadow:var(--shadow)}
+.search input{flex:1;min-width:0;border:0;background:none;outline:0;color:var(--text);-webkit-appearance:none}
+.search input::-webkit-search-cancel-button{-webkit-appearance:none}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:12px -16px 14px;padding:0 16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex:none;height:34px;padding:0 14px;border-radius:17px;background:var(--surface);border:1px solid var(--line);font-size:14px;white-space:nowrap}
+.chip.on{background:var(--grad);border:0;padding:0 15px;color:#fff;font-weight:600;box-shadow:0 6px 14px -6px var(--acc)}
+.chip.add{border-style:dashed;color:var(--muted);background:none}
+.cards.grid{columns:2;column-gap:12px}
+.card{break-inside:avoid;background:var(--surface);background:color-mix(in srgb,var(--c,var(--surface)) 24%,var(--surface));border:1px solid var(--line);border-color:color-mix(in srgb,var(--c,var(--line)) 30%,var(--line));border-radius:22px;padding:14px;margin:0 0 12px;box-shadow:var(--shadow);overflow:hidden;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;transition:transform .15s}
+.card:active{transform:scale(.97)}
+.card .thumb{display:block;width:calc(100% + 28px);margin:-14px -14px 12px;max-height:150px;object-fit:cover}
+.card h3{margin:0 0 4px;font:600 16px/1.25 var(--sans);overflow-wrap:anywhere}
+.card p{margin:0;color:var(--muted);font-size:14px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:5;-webkit-box-orient:vertical;overflow:hidden;white-space:pre-line;overflow-wrap:anywhere}
+.card footer{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;margin-top:10px;font-size:12px;color:var(--muted)}
+.card footer .ic{width:14px;height:14px}.card footer .a{color:var(--acc)}.card footer .a .ic{fill:currentColor}
+.card .tg{color:var(--acc)}
+.prog{height:4px;border-radius:2px;background:var(--surface2);margin-top:10px;overflow:hidden}.prog i{display:block;height:100%;background:var(--acc);border-radius:2px}
+.cards.list .card{display:block}.cards.list .card .thumb{display:none}.cards.list .card p{-webkit-line-clamp:2}
+.empty{text-align:center;color:var(--muted);padding:60px 20px}.empty b{display:block;font:600 20px var(--serif);color:var(--text);margin-bottom:6px}
+.hint{background:color-mix(in srgb,var(--acc) 12%,var(--surface));border-radius:16px;padding:12px 14px;margin-bottom:14px;font-size:14px;display:flex;gap:10px;align-items:flex-start}
+.hint button{color:var(--muted);margin-left:auto}
+.wide{width:100%;height:44px;border-radius:14px;background:var(--surface2);margin-bottom:14px;font-weight:600}
+#fab{position:fixed;right:20px;bottom:calc(var(--sb) + 22px);width:64px;height:64px;border-radius:24px;background:var(--grad);color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px color-mix(in srgb,var(--acc) 45%,transparent);transition:transform .15s}
+#fab:active{transform:scale(.92)}#fab .ic{width:28px;height:28px;stroke-width:2.2}
+
+/* ---------- drawer ---------- */
+.shade{position:fixed;inset:0;background:rgba(20,10,15,.4);opacity:0;visibility:hidden;transition:opacity .25s,visibility 0s .25s;z-index:20}
+.shade.in{opacity:1;visibility:visible;transition-delay:0s}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:min(84vw,330px);background:var(--bg);z-index:21;transform:translateX(-102%);transition:transform .28s cubic-bezier(.2,.8,.2,1);padding:calc(var(--st) + 18px) 12px calc(var(--sb) + 16px);overflow-y:auto;border-radius:0 24px 24px 0}
+#drawer.in{transform:none}
+#drawer h2{font:700 26px var(--serif);margin:0 8px 14px;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent;width:fit-content}
+.dlabel{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:18px 10px 6px;display:flex;align-items:center}
+.dlabel button{margin-left:auto;color:var(--acc);font-size:13px;text-transform:none;letter-spacing:0;font-weight:600}
+.drow{display:flex;align-items:center;gap:12px;height:46px;padding:0 10px;border-radius:14px}
+.drow span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.drow em{font-style:normal;color:var(--muted);font-size:14px;font-variant-numeric:tabular-nums}
+.drow.on{background:color-mix(in srgb,var(--acc) 14%,var(--surface));color:var(--acc);font-weight:600}
+.drow .fedit{width:32px;height:32px;display:grid;place-items:center;color:var(--muted)}.drow .fedit .ic{width:18px;height:18px}
+
+/* ---------- editor ---------- */
+#editor{position:fixed;left:0;right:0;top:var(--vvt,0px);height:var(--vvh,100dvh);background:var(--bg);z-index:10;display:flex;flex-direction:column;transform:translateX(100%);visibility:hidden;transition:transform .28s cubic-bezier(.2,.8,.2,1),visibility 0s .28s}
+#editor.in{transform:none;visibility:visible;transition-delay:0s}
+#editor::before{content:"";position:absolute;inset:0;background:var(--c,transparent);opacity:.1;pointer-events:none}
+.ebar{display:flex;align-items:center;padding:calc(var(--st) + 6px) 8px 2px;position:relative}
+.escroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:4px 20px 40px;display:flex;flex-direction:column;position:relative}
+#eTitle{width:100%;border:0;outline:0;background:none;font:700 26px/1.2 var(--serif);padding:4px 0}
+#eTitle::placeholder{color:var(--muted);opacity:.6}
+#eMeta{font-size:12px;color:var(--muted);margin:2px 0 12px}
+.ed{flex:1;min-height:200px;outline:0;font-size:17px;line-height:1.55;overflow-wrap:anywhere;-webkit-user-select:text;user-select:text}
+.ed:empty::before{content:"Почни писати…";color:var(--muted);opacity:.6}
+.ed h2{font:700 21px/1.25 var(--serif);margin:14px 0 6px}
+.ed ul,.ed ol{padding-left:26px;margin:6px 0}
+.ed img{max-width:100%;border-radius:14px;display:block;margin:10px 0}
+.ed span[style]{color:#2a2224;border-radius:4px;padding:0 2px}
+.ed ul.todo{list-style:none;padding-left:34px}
+.ed ul.todo>li{position:relative;margin:7px 0}
+.ed ul.todo>li::before{content:"";position:absolute;left:-34px;top:.12em;width:22px;height:22px;border-radius:8px;border:2px solid var(--muted);cursor:pointer}
+.ed ul.todo>li.done::before{border-color:var(--acc);background:var(--acc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E") center/14px no-repeat}
+.ed ul.todo>li.done{color:var(--muted);text-decoration:line-through}
+.tools{display:flex;align-items:center;gap:2px;overflow-x:auto;padding:6px 8px calc(var(--sb) + 6px);border-top:1px solid var(--line);background:var(--surface);scrollbar-width:none;position:relative}
+.tools::-webkit-scrollbar{display:none}
+.tools button{flex:none;width:42px;height:40px;border-radius:12px;display:grid;place-items:center;font-size:18px}
+.tools button:active{background:var(--surface2)}
+.tools button.on{background:color-mix(in srgb,var(--acc) 18%,var(--surface));color:var(--acc)}
+.tools .sep{flex:none;width:1px;height:22px;background:var(--line);margin:0 4px}
+.tools .hl{background:#ffe066;color:#2a2224;border-radius:5px;padding:0 6px;font-weight:600}
+
+/* ---------- sheets ---------- */
+.sheet-wrap{position:fixed;inset:0;z-index:40;background:rgba(20,10,15,.4);display:flex;align-items:flex-end;justify-content:center;opacity:0;transition:opacity .2s}
+.sheet-wrap.in{opacity:1}
+.sheet{width:100%;max-width:520px;max-height:88%;overflow-y:auto;background:var(--bg);border-radius:26px 26px 0 0;padding:8px 16px calc(var(--sb) + 18px);transform:translateY(30px);transition:transform .22s cubic-bezier(.2,.8,.2,1)}
+.sheet-wrap.in .sheet{transform:none}
+.grab{width:38px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 12px}
+.sheet h3{font:700 20px var(--serif);margin:4px 4px 12px}
+.sheet .lbl{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:16px 4px 6px}
+.group{background:var(--surface);border-radius:16px;overflow:hidden}
+.row{display:flex;align-items:center;gap:12px;min-height:50px;padding:0 14px;width:100%;text-align:left}
+.row+.row{border-top:1px solid var(--line)}
+.row.danger{color:#e5484d}
+.row span{flex:1}
+.row input,.row select{flex:1.4;min-width:0;height:36px;border:0;outline:0;background:none;text-align:right;color:var(--muted)}
+.sw{display:flex;gap:10px;padding:12px 14px;flex-wrap:wrap}
+.sw button{width:34px;height:34px;border-radius:50%;background:var(--k);border:2px solid var(--line);position:relative}
+.sw button.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+.seg{display:flex;background:var(--surface2);border-radius:12px;padding:3px}
+.seg button{flex:1;height:36px;border-radius:10px;font-size:14px}
+.seg button.on{background:var(--surface);box-shadow:var(--shadow);font-weight:600}
+.field{width:100%;height:48px;border-radius:14px;border:1px solid var(--line);background:var(--surface);padding:0 14px;outline:0}
+.field:focus{border-color:var(--acc)}
+.btns{display:flex;gap:10px;margin-top:14px}
+.btn{flex:1;height:48px;border-radius:14px;background:var(--surface2);font-weight:600}
+.btn.pri{background:var(--grad);color:#fff}.btn.red{background:#e5484d;color:#fff}
+.note{font-size:13px;color:var(--muted);margin:8px 4px 0}
+
+/* ---------- toast ---------- */
+.toast{position:fixed;left:16px;right:16px;bottom:calc(var(--sb) + 96px);margin:auto;max-width:440px;z-index:60;background:var(--text);color:var(--bg);border-radius:16px;padding:13px 16px;display:flex;gap:12px;align-items:center;font-size:15px;transform:translateY(20px);opacity:0;transition:.25s}
+.toast.in{transform:none;opacity:1}.toast span{flex:1}.toast button{color:var(--acc);font-weight:700;filter:brightness(1.25)}
+
+/* ---------- lock ---------- */
+#lock{position:fixed;inset:0;z-index:100;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:26px;padding:20px}
+#lock .ic{width:34px;height:34px;color:var(--acc)}
+#lockT{font:600 20px var(--serif);text-align:center}
+#dots{display:flex;gap:16px}#dots i{width:14px;height:14px;border-radius:50%;border:2px solid var(--muted)}#dots i.on{background:var(--acc);border-color:var(--acc)}
+#dots.bad{animation:shake .35s}@keyframes shake{25%{transform:translateX(-10px)}75%{transform:translateX(10px)}}
+.pad{display:grid;grid-template-columns:repeat(3,74px);gap:16px}
+.pad button{height:74px;border-radius:50%;background:var(--surface2);font-size:28px;display:grid;place-items:center}
+.pad button:active{background:var(--acc);color:#fff}.pad button.t{background:none;font-size:15px;color:var(--muted)}
+
+/* ---------- draw ---------- */
+#draw{position:fixed;inset:0;z-index:50;background:var(--bg);display:flex;flex-direction:column}
+#draw .ebar{gap:4px}#draw .ebar b{flex:1;text-align:center;font:600 17px var(--serif)}
+#draw .done{color:var(--acc);font-weight:700;padding:0 12px;height:42px}
+#cv{flex:1;margin:8px 12px;border-radius:20px;background:#fff;touch-action:none;box-shadow:var(--shadow);min-height:0;width:calc(100% - 24px)}
+.dtools{display:flex;align-items:center;gap:10px;padding:8px 14px calc(var(--sb) + 12px);overflow-x:auto}
+.dtools .k{flex:none;width:30px;height:30px;border-radius:50%;background:var(--k);border:2px solid var(--line)}
+.dtools .k.on{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--text)}
+.dtools .w{flex:none;width:36px;height:36px;border-radius:12px;display:grid;place-items:center}.dtools .w.on{background:var(--surface2)}
+.dtools .w i{display:block;border-radius:50%;background:var(--text)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@media (min-width:700px){.cards.grid{columns:3}.scroll{padding-left:max(16px,calc(50% - 400px));padding-right:max(16px,calc(50% - 400px))}}
+</style>
+<link rel="stylesheet" href="life.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pacifico&amp;family=Nunito:wght@600;700;800;900&amp;display=swap">
+<link rel="stylesheet" href="glam.css">
+</head>
+<body>
+<div id="app">
+  <div id="bg" class="bgl"><canvas id="gl"></canvas><i></i><i></i><i></i></div>
+  <main class="tab on" data-tab="today"><div class="pg" id="pgToday"></div></main>
+  <main class="tab" data-tab="plan"><div class="pg" id="pgPlan"></div></main>
+  <main class="tab" data-tab="stats"><div class="pg" id="pgStats"></div></main>
+  <main class="tab" data-tab="more"><div class="pg" id="pgMore"></div></main>
+<main id="list" class="tab" data-tab="notes">
+  <header class="top"><button class="ib" id="bMenu" aria-label="Меню"></button><div class="grow"></div><button class="ib" id="bSet" aria-label="Налаштування"></button></header>
+  <div class="scroll">
+    <h1 id="hTitle">Нотатки</h1>
+    <p class="sub" id="hSub"></p>
+    <label class="search"><span id="sIc"></span><input id="q" type="search" placeholder="Пошук нотаток" autocomplete="off" enterkeyhint="search"></label>
+    <div class="chips" id="chips"></div>
+    <div id="hint"></div>
+    <div id="cards" class="cards grid"></div>
+  </div>
+  <button id="fab" aria-label="Нова нотатка"></button>
+</main>
+<nav id="tabs"></nav>
+</div>
+<section id="page"></section>
+
+<div class="shade" id="shade"></div>
+<aside id="drawer"></aside>
+
+<section id="editor">
+  <div class="ebar"><button class="ib" id="eBack" aria-label="Назад"></button><div class="grow"></div><button class="ib" id="ePin" aria-label="Закріпити"></button><button class="ib" id="eFav" aria-label="Обране"></button><button class="ib" id="eMore" aria-label="Більше"></button></div>
+  <div class="escroll" id="eScroll">
+    <input id="eTitle" placeholder="Заголовок" autocomplete="off" enterkeyhint="next" maxlength="200">
+    <div id="eMeta"></div>
+    <div class="ed" id="ed" contenteditable="true" spellcheck="true"></div>
+  </div>
+  <div class="tools" id="tools"></div>
+  <input type="file" id="file" accept="image/*" multiple hidden>
+</section>
+
+<section id="draw" hidden>
+  <div class="ebar"><button class="ib" id="dClose" aria-label="Закрити"></button><button class="ib" id="dUndo" aria-label="Скасувати"></button><button class="ib" id="dClear" aria-label="Очистити"></button><b>Малюнок</b><button class="done" id="dDone">Готово</button></div>
+  <canvas id="cv"></canvas>
+  <div class="dtools" id="dTools"></div>
+</section>
+
+<section id="lock" hidden>
+  <span id="lockIc"></span><div id="lockT"></div>
+  <div id="dots"><i></i><i></i><i></i><i></i></div>
+  <div class="pad">
+    <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
+    <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
+    <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
+    <button data-k="c" class="t" id="lockC">Скасувати</button><button data-k="0">0</button><button data-k="d" class="t">Стерти</button>
+  </div>
+</section>
+<input type="file" id="impFile" accept=".json,application/json" hidden>
+
+<script>
+'use strict';
+/* ================= helpers ================= */
+const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+const I={
+ menu:'<path d="M4 7h16M4 12h16M4 17h10"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="m15 5-7 7 7 7"/>',
+ pin:'<path d="M9 4h6l-1 6 3 3H7l3-3-1-6zM12 13v7"/>',star:'<path d="m12 3.5 2.6 5.4 5.9.8-4.3 4.1 1 5.9L12 16.9l-5.2 2.8 1-5.9L3.5 9.7l5.9-.8z"/>',
+ more:'<circle cx="5" cy="12" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="19" cy="12" r="1.3"/>',trash:'<path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/>',
+ folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',tag:'<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.2"/>',
+ bell:'<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>',set:'<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+ notes:'<path d="M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5"/>',image:'<rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m4 18 5-5 4 4 3-3 4 4"/>',
+ pen:'<path d="M4 20l1-4L16 5l3 3L8 19zM14 7l3 3"/>',check:'<rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8 12 3 3 5-6"/>',
+ ul:'<path d="M9 7h11M9 12h11M9 17h11"/><circle cx="4.5" cy="7" r="1"/><circle cx="4.5" cy="12" r="1"/><circle cx="4.5" cy="17" r="1"/>',ol:'<path d="M10 7h10M10 12h10M10 17h10M4 5.5 5.5 5v4M4 15h2l-2 3h2"/>',
+ undo:'<path d="M8 5 4 9l4 4M4 9h10a5 5 0 0 1 0 10h-3"/>',redo:'<path d="m16 5 4 4-4 4M20 9H10a5 5 0 0 0 0 10h3"/>',share:'<path d="M12 15V3M8 7l4-4 4 4M5 12v7a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-7"/>',
+ copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/>',lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>',
+ x:'<path d="M6 6l12 12M18 6 6 18"/>',eraser:'<path d="m7 20-4-4L14 5l6 6-9 9zM9 20h11M9 10l6 6"/>',restore:'<path d="M4 12a8 8 0 1 0 2.5-5.8M4 4v5h5"/>',
+ sun:'<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M2 12h2.5M19.5 12H22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>',moon:'<path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z"/>',spark:'<path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z"/>',
+ tpl:'<rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 10v10"/>',edit:'<path d="M4 20l1-4L16 5l3 3L8 19z"/>',down:'<path d="m6 9 6 6 6-6"/>',dup:'<path d="M12 8v8M8 12h8"/><rect x="4" y="4" width="16" height="16" rx="3"/>'};
+const ico=n=>`<svg viewBox="0 0 24 24" class="ic" aria-hidden="true">${I[n]}</svg>`;
+const pl=(n,f)=>{const a=n%10,b=n%100;return f[a===1&&b!==11?0:a>=2&&a<=4&&(b<10||b>=20)?1:2]};
+const NOTEW=['нотатка','нотатки','нотаток'];
+function fdate(t){const d=new Date(t),n=new Date();if(d.toDateString()===n.toDateString())return d.toLocaleTimeString('uk-UA',{hour:'2-digit',minute:'2-digit'});return d.toLocaleDateString('uk-UA',d.getFullYear()===n.getFullYear()?{day:'numeric',month:'short'}:{day:'numeric',month:'short',year:'numeric'})}
+const fdt=t=>new Date(t).toLocaleString('uk-UA',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+const toLocal=t=>{const d=new Date(t-new Date(t).getTimezoneOffset()*6e4);return d.toISOString().slice(0,16)};
+const ACCENTS=['#e56b8f','#ef8354','#d9a21b','#3fae82','#3d9be9','#8f7ae5','#6b6570'];
+const ACC2={'#e56b8f':'#f08a5d','#ef8354':'#e5a019','#d9a21b':'#ef8354','#3fae82':'#3d9be9','#3d9be9':'#8f7ae5','#8f7ae5':'#e56b8f','#6b6570':'#9a8f97'};
+const PRED=['Сьогодні хтось подумає про тебе з теплом — і ти це відчуєш.','На тебе чекає маленька приємна несподіванка. Не поспішай — вона знайде тебе сама.','Сьогодні твоя усмішка змінить чийсь день на краще.','Те, що довго не виходило, сьогодні зрушить з місця.','Гарна новина вже в дорозі. Залиш для неї трохи місця в дні.','Сьогодні вдалий день, щоб почати те, що давно відкладалося.','Випадкова розмова подарує тобі гарну ідею.','Сьогодні все складеться простіше, ніж здається зранку.','Тебе чекає мить, яку захочеться запамʼятати. Придивляйся до дрібниць.','Сьогодні інтуїція тебе не підведе — довірся першому відчуттю.','День принесе привід пишатися собою.','Хтось сьогодні скаже тобі саме ті слова, які потрібно почути.','Сьогодні час працює на тебе: усе встигнеться.','Маленький крок, зроблений сьогодні, приведе до чогось великого.','Сьогодні тобі пощастить у дрібницях — а з них і складається день.','На тебе чекає смачна кава, тепла розмова і трохи дива.','Сьогодні світ буде до тебе лагідним.','Відповідь, яку ти шукаєш, прийде несподівано і вчасно.','Сьогодні твоя доброта повернеться до тебе вдвічі.','День подарує нову причину для радості.','Сьогодні вдасться те, за що берешся з легким серцем.','Тебе чекає зустріч або повідомлення, що підніме настрій.','Сьогодні твої слова матимуть особливу силу — кажи добрі.','Те, про що мрієш, сьогодні стане на крок ближче.','Сьогодні ти помітиш красу там, де раніше її не було видно.','День буде щедрим на тепло — і надворі, і в серці.','Сьогодні в тебе вийде більше, ніж плануєш.','Хтось дуже чекає на твоє повідомлення. Так, саме на твоє.','Сьогодні гарний день для сміливого рішення.','Усмішка незнайомої людини сьогодні стане добрим знаком.','Сьогодні ти опинишся в потрібному місці в потрібний час.','День приготував для тебе привід посміятися від душі.','Сьогодні твій спокій буде твоєю суперсилою.','Стара мрія сьогодні нагадає про себе — прислухайся.','Сьогодні хтось закохається у твою усмішку. Знову.','Усе, що ти робиш із любовʼю, сьогодні вдасться.','Сьогодні на тебе чекають обійми, яких саме зараз бракує.','День складеться так, що ввечері ти скажеш: «Було добре».','Сьогодні зірки на твоєму боці. Як, зрештою, і завжди.','Тебе сьогодні люблять. Це не передбачення — це факт.'];
+const MOTIV=['Сьогодні зроблено достатньо. Можна видихнути.','Не все встиглося? Нічого. Завтра буде новий день і нові сили.','Пишайся собою за кожну дрібницю, яка сьогодні вдалася.','Відпочинок — це не лінь, а частина шляху.','Ти ближче до мети, ніж учора. Це й називається рухом.','Навіть найповільніший крок — це крок уперед.','Згадай три хороші речі за сьогодні. Вони точно були.','Ти сильніша, ніж думаєш.','Завтра ти прокинешся з новими силами. А зараз — спокій.','Великі речі складаються з маленьких вечорів, коли ти не здалася.','Усе, що сьогодні не вийшло, — це досвід, а не поразка.','Ти заслуговуєш на відпочинок так само, як і на успіх.','Не порівнюй себе з іншими. Порівнюй із собою вчорашньою.','Сьогоднішня втома — це слід твоїх старань. Ти молодець.','Мрії не мають терміну придатності. Продовжуй.','Відпусти цей день із вдячністю — він зробив тебе трохи мудрішою.','Ти впоралася. Як і завжди.','Тихий вечір — найкращий час знову повірити в себе.','Завтрашня ти подякує тобі за сьогоднішні зусилля.','Не обовʼязково бути ідеальною. Досить бути собою.','Кожен день, коли ти не опустила руки, — це перемога.','Дозволь собі просто побути. Світ зачекає до ранку.','Ти ростеш навіть тоді, коли цього не помічаєш.','Найтемніша ніч закінчується світанком. Завжди.','Твої старання ніхто не скасує. Вони вже працюють на тебе.','Сьогодні ти була сміливою хоча б в одному. Цього досить.','Зроби на завтра один маленький план — і лягай зі спокійним серцем.','Те, що здається горою, завтра виявиться пагорбом.','Ти вмієш більше, ніж сама про себе знаєш.','Будь до себе ввечері такою ж доброю, як до інших удень.','Успіх любить тих, хто вміє відпочивати.','Усе важливе встигнеться. Усе твоє до тебе прийде.','Ти — чиясь найкраща частина дня. Памʼятай про це.','Сьогодні закінчується, а твоя сила — ні.','Зірки світять і тим, хто втомився. Особливо їм.','Запиши одну думку перед сном — завтра вона стане початком.','Ніхто не пройде твій шлях краще за тебе.','Спокійний сон — теж крок до мрії.','Ти важлива. Сьогодні, завтра і завжди.','Добраніч. Завтра в тебе все вийде.'];
+const BGS=[['silk','Шовк'],['aurora','Північне сяйво'],['nebula','Космос'],['bokeh','Вогники'],['plain','Без фону']];
+const NC=['','#ff8fa3','#ffb86b','#f5d547','#7ed6a5','#7cc4f5','#b79cf2'];
+
+/* ================= storage ================= */
+const DB={db:null,
+ open(){return new Promise((res,rej)=>{const r=indexedDB.open('notatky',1);r.onupgradeneeded=()=>r.result.createObjectStore('notes',{keyPath:'id'});r.onsuccess=()=>{this.db=r.result;res()};r.onerror=()=>rej(r.error)})},
+ run(mode,fn){return new Promise((res,rej)=>{const r=fn(this.db.transaction('notes',mode).objectStore('notes'));r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})},
+ all(){return this.run('readonly',s=>s.getAll())},put(n){return this.run('readwrite',s=>s.put(n)).catch(e=>toast('Не вдалося зберегти: бракує місця'))},del(id){return this.run('readwrite',s=>s.delete(id))}};
+const cfg=Object.assign({theme:'auto',accent:ACCENTS[0],sort:'updated',view:'grid',folders:[],pin:null,salt:'',name:'',seeded:false,hintOff:false,daily:'on',dailySeen:'',bg:'silk',style:'glam'},(()=>{try{return JSON.parse(localStorage.getItem('notatky.cfg'))||{}}catch(e){return{}}})());
+const saveCfg=()=>{try{localStorage.setItem('notatky.cfg',JSON.stringify(cfg))}catch(e){}};
+let notes=[],cur=null,dirty=false,saveT=0;
+const S={filter:{type:'all',id:''},q:''};
+
+/* ================= sanitising ================= */
+const OKT=new Set('B I U S STRIKE EM STRONG H2 H3 P DIV BR UL OL LI IMG SPAN BLOCKQUOTE'.split(' '));
+function sanitize(html){const t=document.createElement('template');t.innerHTML=html;
+ (function walk(p){[...p.childNodes].forEach(n=>{if(n.nodeType===3)return;if(n.nodeType!==1){n.remove();return}const tag=n.tagName.toUpperCase();
+  if(/^(SCRIPT|STYLE|IFRAME|OBJECT|EMBED|LINK|META|SVG|MATH|FORM|INPUT|BUTTON|TEXTAREA|SELECT|VIDEO|AUDIO|TEMPLATE)$/.test(tag)){n.remove();return}
+  walk(n);if(!OKT.has(tag)){n.replaceWith(...n.childNodes);return}
+  [...n.attributes].forEach(a=>{const v=a.value;const keep=(a.name==='class'&&((tag==='UL'&&v==='todo')||(tag==='LI'&&v==='done')))||(a.name==='src'&&tag==='IMG'&&/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(v))||(a.name==='style'&&tag==='SPAN'&&/^background-color:\s*[#\w(), .%]+;?$/.test(v));if(!keep)n.removeAttribute(a.name)});
+  if(tag==='IMG'&&!n.getAttribute('src'))n.remove()})})(t.content);return t.innerHTML}
+function plainOf(html){const t=document.createElement('template');t.innerHTML=html.replace(/<(br|\/div|\/p|\/li|\/h\d|\/blockquote)[^>]*>/gi,'\n');return t.content.textContent.replace(/ /g,' ').replace(/\n{2,}/g,'\n').trim()}
+function todoOf(html){const t=document.createElement('template');t.innerHTML=html;return[t.content.querySelectorAll('ul.todo>li.done').length,t.content.querySelectorAll('ul.todo>li').length]}
+function cleanNote(o){if(!o||typeof o!=='object')return null;const html=sanitize(String(o.html||''));const now=Date.now();
+ return{id:String(o.id||'').replace(/[^\w-]/g,'').slice(0,40)||uid(),title:String(o.title||'').slice(0,200),html,text:plainOf(html),todo:todoOf(html),folder:cfg.folders.some(f=>f.id===o.folder)?o.folder:'',
+  tags:Array.isArray(o.tags)?o.tags.map(x=>String(x).trim().slice(0,30)).filter(Boolean).slice(0,15):[],pinned:!!o.pinned,fav:!!o.fav,color:NC.includes(o.color)?o.color:'',
+  created:+o.created||now,updated:+o.updated||now,deleted:+o.deleted||0,remind:+o.remind||0,reminded:!!o.reminded}}
+
+/* ================= live backgrounds (WebGL) ================= */
+const FS_HEAD=`#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+uniform vec2 R;uniform float T,D;uniform vec3 A,B,C;
+float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1.,0.)),f.x),mix(h(i+vec2(0.,1.)),h(i+vec2(1.,1.)),f.x),f.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<5;i++){v+=a*n(p);p=p*2.02+vec2(17.3,9.1);a*=.5;}return v;}
+float stars(vec2 g,float th){vec2 i=floor(g);float s=h(i);vec2 o=vec2(h(i+3.1),h(i+7.7))-.5;float d=length(fract(g)-.5-o*.6);return smoothstep(.1,0.,d)*step(th,s)*(.55+.45*sin(T*(1.+s*3.)+s*50.));}
+vec3 tone(vec3 c){return D>.5?c*.58:mix(c,vec3(1.),.26);}
+void main(){vec2 uv=gl_FragCoord.xy/R;vec2 p=(gl_FragCoord.xy-.5*R)/R.y;vec3 col;`;
+const FS={
+silk:`float t=T*.05;
+vec2 q=vec2(fbm(p*1.2+t),fbm(p*1.2+vec2(5.2,1.3)-t));
+vec2 r=vec2(fbm(p+3.*q+vec2(1.7,9.2)+t*1.4),fbm(p+3.*q+vec2(8.3,2.8)-t*1.1));
+float f=fbm(p*.9+3.2*r);
+col=mix(A,B,smoothstep(.38,.62,f));
+col=mix(col,C,smoothstep(.46,.68,r.x)*.9);
+col=mix(col,mix(A,vec3(.45,.22,.8),.6),smoothstep(.48,.7,q.y)*.75);
+col+=pow(.5+.5*sin((f*2.+r.y)*8.),3.)*.07;
+col+=smoothstep(.55,.8,r.y)*.22;
+col=tone(col);`,
+aurora:`col=mix(vec3(.055,.04,.15),vec3(.012,.015,.05),uv.y);
+col+=stars(gl_FragCoord.xy/R.y*60.,.9)*.9+stars(gl_FragCoord.xy/R.y*110.+9.,.93)*.6;
+for(int i=0;i<3;i++){float fi=float(i);
+ float w=fbm(vec2(p.x*1.4+fi*2.3+T*.04*(1.+fi*.4),fi*5.+T*.025));
+ float y=uv.y-(.36+fi*.13)-(w-.5)*.45;
+ float ray=n(vec2(p.x*16.+w*6.+fi*9.,T*.15+fi));
+ float b=smoothstep(-.035,0.,y)*exp(-max(y,0.)*(3.5+5.*ray))*(.5+.5*ray);
+ vec3 ac=i==0?mix(C,vec3(.2,1.,.75),.55):(i==1?A:B);
+ col+=ac*b*.85;}
+col+=A*.16*pow(1.-uv.y,3.);`,
+nebula:`float t=T*.02;vec2 q=p*1.6;
+float f1=fbm(q+vec2(t,-t)+2.*vec2(fbm(q*.8+t),fbm(q*.8-t+4.)));
+float f2=fbm(q*1.7-vec2(t*1.5,t)+7.);
+float f3=fbm(q*.7+vec2(3.,t*2.));
+col=vec3(.015,.012,.045);
+col+=A*pow(smoothstep(.32,.8,f1),2.)*1.1+B*pow(smoothstep(.42,.8,f2),2.)*.8+mix(C,vec3(.3,.25,.95),.5)*pow(smoothstep(.36,.8,f3),2.)*.9;
+float s=stars(gl_FragCoord.xy/R.y*70.,.88)+stars(gl_FragCoord.xy/R.y*130.+5.,.9)*.7;
+col+=s*(.5+f1);
+col=1.-exp(-col*1.7);`,
+bokeh:`col=mix(A,B,clamp(uv.y+.25*sin(T*.08+p.x*2.),0.,1.));
+col=mix(col,C,smoothstep(.35,.8,fbm(p*1.1+T*.03)));
+col*=.85;
+for(int i=0;i<16;i++){float fi=float(i);float sp=.012+.02*h(vec2(fi,3.));
+ vec2 c=vec2((h(vec2(fi,1.))-.5)*R.x/R.y+.05*sin(T*.3+fi),fract(h(vec2(fi,2.))+T*sp)*1.5-.75);
+ float r=.04+.1*h(vec2(fi,4.));float d=length(p-c);
+ float disc=smoothstep(r,r*.9,d);
+ col+=(disc*.07+disc*smoothstep(r*.6,r,d)*.1)*(.6+.4*sin(T*.7+fi*2.1));}
+col=tone(col);`};
+const BG={gl:null,cv:null,prog:{},raf:0,last:0,mode:'',thumbs:{},scale:{silk:.5,aurora:1,nebula:1,bokeh:.75},
+ init(){this.cv=$('#gl');try{this.gl=this.cv.getContext('webgl',{antialias:false,alpha:false,powerPreference:'low-power'})}catch(e){}if(!this.gl)return;this.setup();
+  this.cv.addEventListener('webglcontextlost',e=>{e.preventDefault();this.stop()});this.cv.addEventListener('webglcontextrestored',()=>{this.prog={};this.setup();this.update()});
+  addEventListener('resize',()=>{this.size();this.frame()})},
+ setup(){const g=this.gl,b=g.createBuffer();g.bindBuffer(g.ARRAY_BUFFER,b);g.bufferData(g.ARRAY_BUFFER,new Float32Array([-1,-1,3,-1,-1,3]),g.STATIC_DRAW)},
+ program(m){if(this.prog[m]!==undefined)return this.prog[m];const g=this.gl,sh=(t,src)=>{const s=g.createShader(t);g.shaderSource(s,src);g.compileShader(s);if(!g.getShaderParameter(s,g.COMPILE_STATUS)){console.warn(g.getShaderInfoLog(s));return null}return s};
+  const v=sh(g.VERTEX_SHADER,'attribute vec2 a;void main(){gl_Position=vec4(a,0.,1.);}'),f=sh(g.FRAGMENT_SHADER,FS_HEAD+FS[m]+'gl_FragColor=vec4(col,1.);}');if(!v||!f)return this.prog[m]=null;
+  const p=g.createProgram();g.attachShader(p,v);g.attachShader(p,f);g.bindAttribLocation(p,0,'a');g.linkProgram(p);if(!g.getProgramParameter(p,g.LINK_STATUS))return this.prog[m]=null;
+  const u={};['R','T','D','A','B','C'].forEach(k=>u[k]=g.getUniformLocation(p,k));return this.prog[m]={p,u}},
+ rgb(hex){const n=parseInt(hex.slice(1),16);return[(n>>16)/255,(n>>8&255)/255,(n&255)/255]},
+ draw(m,t){const g=this.gl,P=this.program(m);if(!P)return false;const a=this.rgb(ACCENTS.includes(cfg.accent)?cfg.accent:ACCENTS[0]),b=this.rgb(ACC2[ACCENTS.includes(cfg.accent)?cfg.accent:ACCENTS[0]]),c=a.map((x,i)=>x*.45+[.48,.66,.96][i]*.55);
+  g.viewport(0,0,this.cv.width,this.cv.height);g.useProgram(P.p);g.enableVertexAttribArray(0);g.vertexAttribPointer(0,2,g.FLOAT,false,0,0);
+  g.uniform2f(P.u.R,this.cv.width,this.cv.height);g.uniform1f(P.u.T,t);g.uniform1f(P.u.D,document.documentElement.dataset.theme==='dark'?1:0);g.uniform3fv(P.u.A,a);g.uniform3fv(P.u.B,b);g.uniform3fv(P.u.C,c);g.drawArrays(g.TRIANGLES,0,3);return true},
+ size(){if(!this.gl||!FS[this.mode])return;const k=this.scale[this.mode],w=Math.max(2,Math.round(this.cv.clientWidth*k)),h=Math.max(2,Math.round(this.cv.clientHeight*k));if(this.cv.width!==w||this.cv.height!==h){this.cv.width=w;this.cv.height=h}},
+ frame(){if(this.gl&&FS[this.mode])this.draw(this.mode,performance.now()/1000+40)},
+ tick(ts){this.raf=requestAnimationFrame(t=>this.tick(t));if(ts-this.last<31)return;this.last=ts;this.frame()},
+ stop(){cancelAnimationFrame(this.raf);this.raf=0},
+ update(){const m=cfg.style!=='classic'?'plain':BGS.some(b=>b[0]===cfg.bg)?cfg.bg:'silk',live=!!(this.gl&&FS[m]&&this.program(m));this.mode=m;
+  $('#bg').className='bgl'+(live?' gl':m==='plain'?'':' bg-css');$('#app').classList.toggle('live',live);$('#app').classList.toggle('night',live&&(m==='aurora'||m==='nebula'));
+  this.stop();if(!live)return;this.size();this.frame();if(!document.hidden&&!cur&&!matchMedia('(prefers-reduced-motion:reduce)').matches)this.raf=requestAnimationFrame(t=>this.tick(t))},
+ thumb(m){if(!this.gl||!FS[m])return'';const key=m+cfg.accent+document.documentElement.dataset.theme;if(this.thumbs[key])return this.thumbs[key];const w=this.cv.width,h=this.cv.height;this.cv.width=150;this.cv.height=130;let url='';if(this.draw(m,52))url=this.cv.toDataURL('image/jpeg',.82);this.cv.width=w;this.cv.height=h;this.frame();return this.thumbs[key]=url}};
+
+/* ================= theme ================= */
+const mq=matchMedia('(prefers-color-scheme:dark)');
+function applyTheme(){const d=cfg.theme==='dark'||(cfg.theme==='auto'&&mq.matches);document.documentElement.dataset.theme=d?'dark':'light';const glam=cfg.style!=='classic';document.documentElement.dataset.style=glam?'glam':'classic';const ac=ACCENTS.includes(cfg.accent)?cfg.accent:ACCENTS[0];document.documentElement.style.setProperty('--acc',ac);document.documentElement.style.setProperty('--acc2',ACC2[ac]);BG.update();$('meta[name=theme-color]').content=glam?(d?'#2A0A1C':'#FFE1EF'):(d?'#17131a':'#faf6f3')}
+mq.addEventListener('change',applyTheme);
+
+/* ================= UI primitives ================= */
+function toast(msg,act,fn){const t=document.createElement('div');t.className='toast';t.innerHTML=`<span>${esc(msg)}</span>${act?`<button>${esc(act)}</button>`:''}`;document.body.append(t);requestAnimationFrame(()=>t.classList.add('in'));const kill=()=>{t.classList.remove('in');setTimeout(()=>t.remove(),260)};if(act)t.querySelector('button').onclick=()=>{kill();fn()};setTimeout(kill,act?6000:2200)}
+function sheet(render){const w=document.createElement('div');w.className='sheet-wrap';w.innerHTML='<div class="sheet"></div>';const s=w.firstChild;w.draw=()=>{const y=s.scrollTop;s.innerHTML='<div class="grab"></div>'+render();s.scrollTop=y};w.draw();document.body.append(w);requestAnimationFrame(()=>w.classList.add('in'));w.close=()=>{w.classList.remove('in');setTimeout(()=>w.remove(),220);w.onclose&&w.onclose()};w.addEventListener('click',e=>{if(e.target===w)w.close()});return w}
+function ask(title,val='',ph=''){return new Promise(res=>{const w=sheet(()=>`<h3>${esc(title)}</h3><input class="field" value="${esc(val)}" placeholder="${esc(ph)}" maxlength="40"><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn pri" data-a="ok">Готово</button></div>`);let done=false;const inp=$('input',w);setTimeout(()=>inp.focus(),250);const fin=v=>{if(done)return;done=true;res(v);w.close()};w.onclose=()=>fin(null);inp.onkeydown=e=>{if(e.key==='Enter')fin(inp.value.trim())};w.addEventListener('click',e=>{const a=e.target.dataset?.a;if(a==='ok')fin(inp.value.trim());if(a==='no')fin(null)})})}
+function confirmBox(title,text,ok='Так',danger=true){return new Promise(res=>{const w=sheet(()=>`<h3>${esc(title)}</h3><p class="note" style="font-size:15px">${esc(text)}</p><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn ${danger?'red':'pri'}" data-a="ok">${esc(ok)}</button></div>`);let done=false;const fin=v=>{if(done)return;done=true;res(v);w.close()};w.onclose=()=>fin(false);w.addEventListener('click',e=>{const a=e.target.dataset?.a;if(a==='ok')fin(true);if(a==='no')fin(false)})})}
+
+/* ================= list ================= */
+function visible(){const f=S.filter,q=S.q.trim().toLowerCase();let a=notes.filter(n=>f.type==='trash'?n.deleted:!n.deleted);
+ if(f.type==='fav')a=a.filter(n=>n.fav);if(f.type==='folder')a=a.filter(n=>n.folder===f.id);if(f.type==='tag')a=a.filter(n=>n.tags.includes(f.id));if(f.type==='remind')a=a.filter(n=>n.remind);
+ if(q)a=a.filter(n=>(n.title+' '+n.text+' '+n.tags.join(' ')).toLowerCase().includes(q));
+ const k=cfg.sort;return a.sort((x,y)=>(f.type!=='trash'&&(y.pinned-x.pinned))||(f.type==='remind'?x.remind-y.remind:k==='title'?(x.title||'яяя').localeCompare(y.title||'яяя','uk'):y[k]-x[k]))}
+function dailyInfo(){const d=new Date(),h=d.getHours(),eve=h>=17||h<5,b=new Date(d);if(h<5)b.setDate(b.getDate()-1);const day=Math.floor((b.getTime()-b.getTimezoneOffset()*6e4)/864e5),arr=eve?MOTIV:PRED;
+ return{eve,key:(eve?'m':'p')+day,text:arr[(day*7+3)%arr.length],label:eve?'Мотивація на вечір':'Передбачення дня',date:b.toLocaleDateString('uk-UA',{day:'numeric',month:'long'})}}
+function renderDaily(){const el=$('#daily');if(!el)return;if(cfg.daily!=='on'||S.filter.type!=='all'||S.q){el.innerHTML='';return}const i=dailyInfo();if(el.dataset.key===i.key&&el.firstChild)return;el.dataset.key=i.key;
+ const st=[[14,62,14,0],[30,84,9,1.1],[62,92,12,.5],[80,70,8,1.8],[8,40,7,2.3]].map(([t,l,s,dl])=>`<i class="st" style="top:${t}%;left:${l}%;width:${s}px;height:${s}px;animation-delay:${dl}s">${ico('spark')}</i>`).join('');
+ el.innerHTML=`<section class="daily ${i.eve?'eve':'morn'}${cfg.dailySeen===i.key?'':' closed'}">${st}<div class="d-top">${ico(i.eve?'moon':'sun')}<b>${i.label}</b><span>${i.date}</span></div><p class="d-text">${esc(i.text)}</p><div class="d-act"><button data-d="save">${ico('plus')}У нотатки</button><button data-d="share">${ico('share')}Поділитися</button></div><button class="d-open" data-d="open"><span>${ico('spark')}${i.eve?'Відкрити мотивацію':'Відкрити передбачення'}</span></button></section>`}
+function dailyAct(a){const i=dailyInfo();
+ if(a==='open'){cfg.dailySeen=i.key;saveCfg();$('.daily').classList.remove('closed');navigator.vibrate&&navigator.vibrate(12)}
+ if(a==='share'){const text=`${i.label}: ${i.text}`;if(navigator.share)navigator.share({text}).catch(()=>{});else navigator.clipboard.writeText(text).then(()=>toast('Скопійовано'),()=>toast('Не вдалося скопіювати'))}
+ if(a==='save'){const id='daily-'+i.key;if(notes.some(n=>n.id===id)){toast('Уже є в нотатках');return}const now=Date.now(),n=cleanNote({id,title:`${i.eve?'Мотивація':'Передбачення'} · ${i.date}`,html:`<div>${esc(i.text)}</div>`,tags:[i.eve?'мотивація':'передбачення'],color:i.eve?NC[6]:NC[2],created:now,updated:now});notes.push(n);DB.put(n);render();toast('Збережено в нотатки')}}
+function card(n,i=0){const img=(n.html.match(/<img[^>]+src="([^"]+)"/)||[])[1];const f=cfg.folders.find(x=>x.id===n.folder);const[d,t]=n.todo||[0,0];
+ return`<article class="card" data-id="${n.id}" style="--i:${Math.min(i,10)}${n.color?`;--c:${n.color}`:''}">${img?`<img class="thumb" src="${img}" alt="">`:''}<h3>${esc(n.title||(n.text?n.text.split('\n')[0].slice(0,60):'Без назви'))}</h3>${n.text&&n.title?`<p>${esc(n.text.slice(0,220))}</p>`:''}${t?`<div class="prog"><i style="width:${Math.round(d/t*100)}%"></i></div>`:''}<footer>${n.pinned?`<span class="a">${ico('pin')}</span>`:''}${n.fav?`<span class="a">${ico('star')}</span>`:''}<span>${fdate(n.deleted||n.updated)}</span>${t?`<span>✓ ${d}/${t}</span>`:''}${n.remind?`<span>🔔 ${fdt(n.remind)}</span>`:''}${f&&S.filter.type!=='folder'?`<span>${esc(f.name)}</span>`:''}${n.tags.map(x=>`<span class="tg">#${esc(x)}</span>`).join('')}</footer></article>`}
+function render(anim){const f=S.filter,a=visible(),live=notes.filter(n=>!n.deleted).length;renderDaily();
+ const fo=cfg.folders.find(x=>x.id===f.id);$('#hTitle').textContent={all:'',fav:'Обране',trash:'Кошик',remind:'Нагадування',folder:fo?fo.name:'Папка',tag:'#'+f.id}[f.type];
+ const h=new Date().getHours(),g=h<5?'Доброї ночі':h<12?'Доброго ранку':h<17?'Добрий день':'Добрий вечір';
+ if(f.type==='all')$('#hTitle').textContent='Нотатки';
+ $('#hSub').textContent=f.type==='all'?`${live} ${pl(live,NOTEW)}`:f.type==='trash'?'Нотатки зберігаються тут 30 днів':`${a.length} ${pl(a.length,NOTEW)}`;
+ $('#chips').innerHTML=[['all','','Усі'],['fav','','★ Обране'],...cfg.folders.map(x=>['folder',x.id,x.name])].map(([t,id,l])=>`<button class="chip${f.type===t&&f.id===id?' on':''}" data-t="${t}" data-id="${esc(id)}">${esc(l)}</button>`).join('')+'<button class="chip add" data-t="newf">+ Папка</button>';
+ let hint='';if(f.type==='trash'&&a.length)hint='<button class="wide" id="emptyTrash" style="color:#e5484d">Очистити кошик</button>';
+ else if(!cfg.hintOff&&/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone)hint=`<div class="hint"><div>📲 Щоб користуватися як застосунком: натисни <b>Поділитися</b> у Safari → <b>На початковий екран</b>.</div><button id="hintX">${ico('x')}</button></div>`;
+ $('#hint').innerHTML=hint;const c=$('#cards');c.className='cards '+cfg.view+(anim?' anim':'');
+ c.innerHTML=a.length?a.map((n,i)=>card(n,i)).join(''):`<div class="empty" style="column-span:all"><b>${S.q?'Нічого не знайдено':f.type==='trash'?'Кошик порожній':'Тут поки порожньо'}</b>${S.q||f.type==='trash'?'':'Натисни +, щоб створити першу нотатку'}</div>`;
+ $('#fab').hidden=f.type==='trash'}
+function setFilter(type,id=''){S.filter={type,id};render(true);$('.scroll').scrollTop=0}
+async function addFolder(){const name=await ask('Нова папка','','Назва папки');if(!name)return;const f={id:uid(),name};cfg.folders.push(f);saveCfg();setFilter('folder',f.id);renderDrawer()}
+
+/* ================= drawer ================= */
+function renderDrawer(){const live=notes.filter(n=>!n.deleted),f=S.filter;const tags={};live.forEach(n=>n.tags.forEach(t=>tags[t]=(tags[t]||0)+1));
+ const row=(t,id,ic,label,count,extra='')=>`<div class="drow${f.type===t&&f.id===id?' on':''}" data-t="${t}" data-id="${esc(id)}">${ico(ic)}<span>${esc(label)}</span><em>${count}</em>${extra}</div>`;
+ $('#drawer').innerHTML=`<h2>Нотатки</h2>`+row('all','','notes','Усі нотатки',live.length)+row('fav','','star','Обране',live.filter(n=>n.fav).length)+row('remind','','bell','Нагадування',live.filter(n=>n.remind).length)+
+ `<div class="dlabel">Папки<button id="dAddF">+ Додати</button></div>`+(cfg.folders.map(x=>row('folder',x.id,'folder',x.name,live.filter(n=>n.folder===x.id).length,`<button class="fedit" data-f="${x.id}" aria-label="Редагувати папку">${ico('edit')}</button>`)).join('')||'<div class="note" style="margin:0 10px">Папок ще немає</div>')+
+ (Object.keys(tags).length?`<div class="dlabel">Теги</div>`+Object.keys(tags).sort().map(t=>row('tag',t,'tag',t,tags[t])).join(''):'')+
+ `<div class="dlabel"></div>`+row('trash','','trash','Кошик',notes.length-live.length)+`<div class="drow" data-t="settings">${ico('set')}<span>Налаштування</span></div>`}
+function drawer(open){if(open)renderDrawer();$('#drawer').classList.toggle('in',open);$('#shade').classList.toggle('in',open)}
+async function editFolder(id){const f=cfg.folders.find(x=>x.id===id);if(!f)return;const w=sheet(()=>`<h3>${esc(f.name)}</h3><div class="group"><button class="row" data-a="ren">${ico('edit')}<span>Перейменувати</span></button><button class="row danger" data-a="del">${ico('trash')}<span>Видалити папку</span></button></div><p class="note">Нотатки з папки не видаляються.</p>`);
+ w.addEventListener('click',async e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;w.close();
+  if(a==='ren'){const n=await ask('Назва папки',f.name);if(n){f.name=n;saveCfg()}}
+  if(a==='del'&&await confirmBox('Видалити папку?','Нотатки залишаться у «Усі нотатки».','Видалити')){cfg.folders=cfg.folders.filter(x=>x.id!==id);saveCfg();notes.filter(n=>n.folder===id).forEach(n=>{n.folder='';DB.put(n)});if(S.filter.id===id)S.filter={type:'all',id:''}}
+  render();renderDrawer()})}
+
+/* ================= editor ================= */
+const ed=$('#ed'),edEl=$('#editor');let range=null;
+function newNote(extra={}){const f=S.filter,now=Date.now();const n={id:uid(),title:'',html:'',text:'',todo:[0,0],folder:f.type==='folder'?f.id:'',tags:f.type==='tag'?[f.id]:[],pinned:false,fav:f.type==='fav',color:'',created:now,updated:now,deleted:0,remind:0,reminded:false,...extra};notes.push(n);openNote(n.id,true)}
+function openNote(id,fresh){const n=notes.find(x=>x.id===id);if(!n)return;cur=n;dirty=false;$('#eTitle').value=n.title;ed.innerHTML=sanitize(n.html);range=null;syncEd();edEl.classList.add('in');BG.stop();$('#eScroll').scrollTop=0;history.pushState({ed:1},'');if(fresh)setTimeout(()=>$('#eTitle').focus(),320)}
+function syncEd(){const n=cur;if(!n)return;$('#ePin').classList.toggle('on',n.pinned);$('#eFav').classList.toggle('on',n.fav);edEl.style.setProperty('--c',n.color||'transparent');
+ const t=plainOf(ed.innerHTML),w=t?t.split(/\s+/).length:0,f=cfg.folders.find(x=>x.id===n.folder);
+ $('#eMeta').textContent=[fdt(n.updated),`${w} ${pl(w,['слово','слова','слів'])}`,f&&f.name,n.remind&&'🔔 '+fdt(n.remind),...n.tags.map(x=>'#'+x)].filter(Boolean).join(' · ')}
+function changed(){dirty=true;clearTimeout(saveT);saveT=setTimeout(saveNow,500)}
+function saveNow(){clearTimeout(saveT);const n=cur;if(!n||!dirty)return;dirty=false;n.title=$('#eTitle').value.trim();n.html=ed.innerHTML;n.text=plainOf(n.html);n.todo=[$$('ul.todo>li.done',ed).length,$$('ul.todo>li',ed).length];n.updated=Date.now();DB.put(n);syncEd()}
+const isEmpty=n=>!n.title&&!n.text&&!/<img/.test(n.html);
+function closeEditor(){if(!cur)return;saveNow();const n=cur;cur=null;if(isEmpty(n)&&!n.deleted){notes=notes.filter(x=>x!==n);DB.del(n.id)}ed.blur();$('#eTitle').blur();edEl.classList.remove('in');render();BG.update()}
+const back=()=>history.state&&history.state.ed?history.back():closeEditor();
+addEventListener('popstate',()=>{if(cur)closeEditor()});
+function curNode(sel){const s=getSelection();if(!s.rangeCount)return null;let n=s.anchorNode;if(n&&n.nodeType===3)n=n.parentNode;const r=n&&n.closest?n.closest(sel):null;return r&&r!==ed&&ed.contains(r)?r:null}
+document.addEventListener('selectionchange',()=>{const s=getSelection();if(s.rangeCount&&ed.contains(s.anchorNode)){range=s.getRangeAt(0).cloneRange();toolState()}});
+function restoreSel(){ed.focus();const s=getSelection();if(range){s.removeAllRanges();s.addRange(range)}else{s.selectAllChildren(ed);s.collapseToEnd()}}
+function insertHTML(html){restoreSel();if(!document.execCommand('insertHTML',false,html))ed.insertAdjacentHTML('beforeend',html);changed()}
+const TOOLS=[['todo',ico('check'),'Список справ'],['img',ico('image'),'Фото'],['draw',ico('pen'),'Малюнок'],0,['bold','<b>B</b>','Жирний'],['italic','<i style="font-family:var(--serif)">I</i>','Курсив'],['underline','<u>U</u>','Підкреслений'],['strikeThrough','<s>S</s>','Закреслений'],['h','<b style="font-family:var(--serif)">H</b>','Заголовок'],['hl','<span class="hl">A</span>','Виділити'],['ul',ico('ul'),'Маркери'],['ol',ico('ol'),'Нумерація'],0,['undo',ico('undo'),'Назад'],['redo',ico('redo'),'Вперед'],['kb',ico('down'),'Сховати клавіатуру']];
+$('#tools').innerHTML=TOOLS.map(t=>t?`<button data-c="${t[0]}" aria-label="${t[2]}">${t[1]}</button>`:'<i class="sep"></i>').join('');
+function toolState(){const on=(c,v)=>$(`#tools [data-c=${c}]`).classList.toggle('on',!!v);try{['bold','italic','underline','strikeThrough'].forEach(c=>on(c,document.queryCommandState(c)));const ul=curNode('ul');on('todo',ul&&ul.classList.contains('todo'));on('ul',ul&&!ul.classList.contains('todo'));on('ol',curNode('ol'));on('h',curNode('h2'))}catch(e){}}
+$('#tools').addEventListener('mousedown',e=>e.preventDefault());
+$('#tools').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;const c=b.dataset.c,X=(k,v)=>document.execCommand(k,false,v);
+ if(c==='kb'){ed.blur();$('#eTitle').blur();return}
+ if(c==='img'){$('#file').click();return}
+ if(c==='draw'){ed.blur();openDraw();return}
+ restoreSel();const ul=curNode('ul');
+ if(c==='todo'){if(ul&&ul.classList.contains('todo')){ul.removeAttribute('class');$$('li',ul).forEach(l=>l.removeAttribute('class'))}else{if(!ul){if(curNode('ol'))X('insertOrderedList');X('insertUnorderedList')}const u=curNode('ul');if(u)u.className='todo'}}
+ else if(c==='ul'){if(ul&&ul.classList.contains('todo')){ul.removeAttribute('class');$$('li',ul).forEach(l=>l.removeAttribute('class'))}else X('insertUnorderedList')}
+ else if(c==='ol')X('insertOrderedList');
+ else if(c==='h')X('formatBlock',curNode('h2')?'div':'h2');
+ else if(c==='hl'){const sp=curNode('span[style]');X('hiliteColor',sp&&!/transparent|rgba\(0, 0, 0, 0\)/.test(sp.style.backgroundColor)?'transparent':'#ffe066')}
+ else X(c);
+ changed();toolState()});
+ed.addEventListener('input',e=>{if(e.inputType==='insertParagraph'){const li=curNode('li');if(li&&li.classList.contains('done')&&!li.textContent.trim())li.removeAttribute('class')}changed()});
+ed.addEventListener('click',e=>{const li=e.target.closest&&e.target.closest('ul.todo>li');if(li&&e.clientX<li.getBoundingClientRect().left){e.preventDefault();li.classList.toggle('done');changed()}});
+ed.addEventListener('paste',e=>{const cd=e.clipboardData;if(!cd)return;e.preventDefault();const f=[...cd.files].filter(x=>x.type.startsWith('image/'));if(f.length)addImages(f);else document.execCommand('insertText',false,cd.getData('text/plain'))});
+$('#eTitle').addEventListener('input',changed);
+$('#eTitle').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();ed.focus()}});
+function shrink(file){return new Promise((res,rej)=>{const im=new Image(),u=URL.createObjectURL(file);im.onload=()=>{const k=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.82))};im.onerror=()=>{URL.revokeObjectURL(u);rej()};im.src=u})}
+async function addImages(files){for(const f of files){try{insertHTML(`<img src="${await shrink(f)}"><div><br></div>`)}catch(e){toast('Не вдалося додати фото')}}}
+$('#file').addEventListener('change',e=>{addImages([...e.target.files]);e.target.value=''});
+
+/* ================= note menu ================= */
+const TPL={'🛒 Список покупок':'<h2>Список покупок</h2><ul class="todo"><li>Молоко</li><li>Хліб</li><li><br></li></ul>','☀️ План на день':'<h2>План на день</h2><ul class="todo"><li>Головне на сьогодні</li><li><br></li></ul><h2>Нотатки</h2><div><br></div>','📔 Щоденник':()=>`<h2>${new Date().toLocaleDateString('uk-UA',{weekday:'long',day:'numeric',month:'long'})}</h2><div><b>Настрій:</b> </div><div><b>Що було хорошого:</b> </div><div><b>Думки:</b> </div>`,'🎁 Список бажань':'<h2>Список бажань</h2><ul class="todo"><li><br></li></ul>','✈️ Подорож':'<h2>Подорож</h2><div><b>Куди:</b> </div><div><b>Дати:</b> </div><h2>Взяти з собою</h2><ul class="todo"><li>Документи</li><li>Зарядка</li><li><br></li></ul>'};
+function trashNote(n){n.deleted=Date.now();n.pinned=false;DB.put(n);toast('Переміщено в кошик','Скасувати',()=>{n.deleted=0;DB.put(n);render()})}
+async function shareNote(n){const text=(n.title?n.title+'\n\n':'')+n.text;if(navigator.share){try{await navigator.share({title:n.title||'Нотатка',text})}catch(e){}}else{try{await navigator.clipboard.writeText(text);toast('Скопійовано')}catch(e){toast('Не вдалося скопіювати')}}}
+function noteMenu(n,inEd){if(inEd){dirty=dirty||false;saveNow()}
+ const w=sheet(()=>`<h3>${esc(n.title||'Нотатка')}</h3>
+ <div class="group"><div class="sw">${NC.map(c=>`<button data-col="${c}" class="${n.color===c?'on':''}" style="--k:${c||'var(--surface)'}" aria-label="Колір"></button>`).join('')}</div></div>
+ <div class="lbl">Організація</div><div class="group">
+  <label class="row">${ico('folder')}<span>Папка</span><select id="mF"><option value="">Без папки</option>${cfg.folders.map(f=>`<option value="${f.id}"${n.folder===f.id?' selected':''}>${esc(f.name)}</option>`).join('')}</select></label>
+  <label class="row">${ico('tag')}<span>Теги</span><input id="mT" value="${esc(n.tags.join(', '))}" placeholder="через кому" autocapitalize="off"></label>
+  <label class="row">${ico('bell')}<span>Нагадати</span><input id="mR" type="datetime-local" value="${n.remind?toLocal(n.remind):''}"></label>
+  ${n.remind?`<button class="row" data-a="norem">${ico('x')}<span>Прибрати нагадування</span></button>`:''}</div>
+ <div class="lbl">Дії</div><div class="group">
+  <button class="row" data-a="pin">${ico('pin')}<span>${n.pinned?'Відкріпити':'Закріпити вгорі'}</span></button>
+  <button class="row" data-a="fav">${ico('star')}<span>${n.fav?'Прибрати з обраного':'Додати в обране'}</span></button>
+  ${inEd?`<button class="row" data-a="tpl">${ico('tpl')}<span>Вставити шаблон</span></button>`:''}
+  <button class="row" data-a="share">${ico('share')}<span>Поділитися</span></button>
+  <button class="row" data-a="copy">${ico('copy')}<span>Копіювати текст</span></button>
+  <button class="row" data-a="dup">${ico('dup')}<span>Дублювати</span></button>
+  <button class="row danger" data-a="del">${ico('trash')}<span>Видалити</span></button></div>`);
+ const upd=()=>{DB.put(n);inEd?syncEd():render()};
+ w.addEventListener('change',e=>{const t=e.target;if(t.id==='mF')n.folder=t.value;if(t.id==='mT')n.tags=[...new Set(t.value.split(',').map(x=>x.trim().replace(/^#/,'').slice(0,30)).filter(Boolean))].slice(0,15);
+  if(t.id==='mR'){const v=t.value?new Date(t.value).getTime():0;n.remind=v||0;n.reminded=false;if(v&&window.Notification&&Notification.permission==='default')Notification.requestPermission().catch(()=>{});w.draw()}upd()});
+ w.addEventListener('click',async e=>{const col=e.target.closest('[data-col]');if(col){n.color=col.dataset.col;upd();w.draw();return}
+  const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
+  if(a==='norem'){n.remind=0;upd();w.draw();return}
+  if(a==='pin'){n.pinned=!n.pinned;upd();w.draw();return}
+  if(a==='fav'){n.fav=!n.fav;upd();w.draw();return}
+  w.close();
+  if(a==='share')shareNote(n);
+  if(a==='copy'){try{await navigator.clipboard.writeText((n.title?n.title+'\n\n':'')+n.text);toast('Скопійовано')}catch(e){toast('Не вдалося скопіювати')}}
+  if(a==='dup'){const c={...n,id:uid(),title:(n.title||'Нотатка')+' (копія)',tags:[...n.tags],todo:[...(n.todo||[0,0])],created:Date.now(),updated:Date.now(),pinned:false,remind:0};notes.push(c);DB.put(c);toast('Створено копію');if(!inEd)render()}
+  if(a==='del'){trashNote(n);inEd?back():render()}
+  if(a==='tpl'){const t=sheet(()=>`<h3>Шаблони</h3><div class="group">${Object.keys(TPL).map(k=>`<button class="row" data-k="${esc(k)}"><span>${esc(k)}</span></button>`).join('')}</div>`);t.addEventListener('click',ev=>{const k=ev.target.closest('[data-k]')?.dataset.k;if(!k)return;t.close();const h=typeof TPL[k]==='function'?TPL[k]():TPL[k];ed.insertAdjacentHTML('beforeend',h);if(!$('#eTitle').value)$('#eTitle').value=k.replace(/^\S+\s/,'');changed()})}})}
+function trashMenu(n){const w=sheet(()=>`<h3>${esc(n.title||'Нотатка')}</h3><div class="group"><button class="row" data-a="res">${ico('restore')}<span>Відновити</span></button><button class="row danger" data-a="del">${ico('trash')}<span>Видалити назавжди</span></button></div>`);
+ w.addEventListener('click',async e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;w.close();if(a==='res'){n.deleted=0;DB.put(n);toast('Відновлено')}if(a==='del'){if(!await confirmBox('Видалити назавжди?','Цю дію неможливо скасувати.','Видалити'))return;notes=notes.filter(x=>x!==n);DB.del(n.id)}render()})}
+
+/* ================= settings ================= */
+function openSettings(){const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l])=>`<button data-set="${key}" data-v="${v}" class="${cfg[key]===v?'on':''}">${l}</button>`).join('')}</div>`;
+ const w=sheet(()=>`<h3>Налаштування</h3>
+ <div class="lbl">Як до тебе звертатися</div><input class="field" id="sName" value="${esc(cfg.name)}" placeholder="Імʼя" maxlength="24">
+ <div class="lbl">Ціль по воді, склянок на день</div><input class="field" id="sWater" type="number" inputmode="numeric" min="1" max="20" value="${cfg.waterGoal||8}">
+ <div class="lbl">День народження</div><input class="field" id="sBday" type="date" value="${esc(cfg.birthday||'')}">
+ <div class="lbl">Стиль</div>${seg('style',[['glam','Рожевий гламур'],['classic','Класичний']])}
+ <div class="lbl">Тема</div>${seg('theme',[['auto','Авто'],['light','Світла'],['dark','Темна']])}
+ <div class="classic-only"><div class="lbl">Колір акценту</div><div class="group"><div class="sw">${ACCENTS.map(c=>`<button data-acc="${c}" class="${cfg.accent===c?'on':''}" style="--k:${c}" aria-label="Колір"></button>`).join('')}</div></div>
+ <div class="lbl">Фон</div><div class="bgs">${BGS.map(([v,l])=>`<button data-bg="${v}" class="${cfg.bg===v?'on':''}" style="${BG.thumb(v)?`background-image:url(${BG.thumb(v)})`:''}"><span>${l}</span></button>`).join('')}</div></div>
+ <div class="lbl">Вигляд списку</div>${seg('view',[['grid','Плитка'],['list','Список']])}
+ <div class="lbl">Сортування</div>${seg('sort',[['updated','За змінами'],['created','За створенням'],['title','За назвою']])}
+ <div class="lbl">Приватність</div><div class="group"><button class="row" data-a="pin">${ico('lock')}<span>${cfg.pin?'Вимкнути код-пароль':'Увімкнути код-пароль'}</span></button></div>
+ <p class="note">Код закриває застосунок від сторонніх очей. Якщо його забути — відновити не вдасться.</p>
+ <div class="lbl">Резервна копія</div><div class="group"><button class="row" data-a="exp">${ico('share')}<span>Зберегти копію всіх нотаток</span></button><button class="row" data-a="imp">${ico('restore')}<span>Відновити з копії</span></button></div>
+ <div class="lbl">Стан збереження</div><div class="group"><div class="row">${ico('check')}<span>На цьому пристрої</span></div></div>
+ <p class="note">Усі дані зберігаються лише на цьому телефоні. Збереження в акаунті недоступне, тому час від часу роби резервну копію.</p>
+ <p class="note" style="text-align:center;margin-top:18px">${notes.filter(n=>!n.deleted).length} ${pl(notes.filter(n=>!n.deleted).length,NOTEW)} · зроблено з ♡</p>`);
+ w.addEventListener('change',e=>{const t=e.target;if(t.id==='sName')cfg.name=t.value.trim();else if(t.id==='sWater')cfg.waterGoal=Math.max(1,Math.min(20,Math.round(+t.value)||8));else if(t.id==='sBday')cfg.birthday=/^\d{4}-\d\d-\d\d$/.test(t.value)?t.value:'';else return;saveCfg();render()});
+ w.onclose=()=>window.lifeRefresh&&lifeRefresh();
+ w.addEventListener('click',async e=>{const s=e.target.closest('[data-set]');if(s){cfg[s.dataset.set]=s.dataset.v;saveCfg();applyTheme();render();w.draw();return}
+  const bg=e.target.closest('[data-bg]');if(bg){cfg.bg=bg.dataset.bg;saveCfg();applyTheme();w.draw();return}
+  const ac=e.target.closest('[data-acc]');if(ac){cfg.accent=ac.dataset.acc;saveCfg();applyTheme();w.draw();return}
+  const a=e.target.closest('[data-a]')?.dataset.a;if(!a)return;
+  if(a==='exp')exportAll();if(a==='imp')$('#impFile').click();
+  if(a==='pin'){w.close();if(cfg.pin){const p=await pinPad('Введи поточний код',true);$('#lock').hidden=true;if(p===null)return;if(await hash(p)!==cfg.pin){toast('Невірний код');return}cfg.pin=null;saveCfg();toast('Код-пароль вимкнено')}
+   else{const p1=await pinPad('Придумай код із 4 цифр',true);if(p1===null){$('#lock').hidden=true;return}const p2=await pinPad('Повтори код',true);$('#lock').hidden=true;if(p2===null)return;if(p1!==p2){toast('Коди не збігаються');return}cfg.salt=uid();cfg.pin=await hash(p1);saveCfg();toast('Код-пароль увімкнено')}}})}
+async function exportAll(){const name=`notatky-${new Date().toISOString().slice(0,10)}.json`,file=new File([JSON.stringify({app:'notatky',v:1,exported:Date.now(),folders:cfg.folders,notes,life:window.lifeData?lifeData():null,prefs:{name:cfg.name,waterGoal:cfg.waterGoal,birthday:cfg.birthday}})],name,{type:'application/json'});
+ if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),8000)}
+$('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d||d.app!=='notatky'||!Array.isArray(d.notes))throw 0;
+ (Array.isArray(d.folders)?d.folders:[]).forEach(x=>{if(x&&x.id&&x.name&&!cfg.folders.some(y=>y.id===x.id))cfg.folders.push({id:String(x.id).replace(/[^\w-]/g,'').slice(0,40),name:String(x.name).slice(0,40)})});saveCfg();
+ let k=0;for(const raw of d.notes){const n=cleanNote(raw);if(!n)continue;const old=notes.find(x=>x.id===n.id);if(old&&old.updated>=n.updated)continue;if(old)notes[notes.indexOf(old)]=n;else notes.push(n);await DB.put(n);k++}
+ if(d.life&&window.lifeImport)lifeImport(d.life,d.prefs);render();toast(`Відновлено: ${k} ${pl(k,NOTEW)}`)}catch(err){toast('Це не схоже на файл копії нотаток')}});
+
+/* ================= lock ================= */
+let locked=false,hidAt=0;
+async function hash(p){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(cfg.salt+':'+p));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+function pinPad(title,cancelable){return new Promise(res=>{const el=$('#lock');let buf='';el.hidden=false;$('#lockT').textContent=title;$('#lockC').style.visibility=cancelable?'visible':'hidden';const dots=()=>$$('#dots i').forEach((d,i)=>d.classList.toggle('on',i<buf.length));dots();
+ el.onclick=e=>{const b=e.target.closest('button');if(!b||buf.length===4)return;const k=b.dataset.k;if(k==='c'){el.onclick=null;res(null);return}if(k==='d')buf=buf.slice(0,-1);else buf+=k;dots();if(buf.length===4)setTimeout(()=>{el.onclick=null;res(buf)},140)}})}
+async function lockNow(){if(!cfg.pin||locked)return;locked=true;document.activeElement&&document.activeElement.blur();let t='Введи код-пароль';for(;;){const p=await pinPad(t,false);if(await hash(p)===cfg.pin)break;t='Невірний код, спробуй ще раз';const d=$('#dots');d.classList.remove('bad');void d.offsetWidth;d.classList.add('bad')}$('#lock').hidden=true;locked=false}
+
+/* ================= drawing ================= */
+const D={x:null,color:'#2a2224',size:4,erase:false,stack:[],down:false,last:null,box:null};
+const DCOL=['#2a2224','#e5484d','#ef8354','#d9a21b','#3fae82','#3d9be9','#8f7ae5','#e56b8f'];
+function drawTools(){$('#dTools').innerHTML=DCOL.map(c=>`<button class="k${!D.erase&&D.color===c?' on':''}" data-k="${c}" style="--k:${c}" aria-label="Колір"></button>`).join('')+`<i class="sep" style="flex:none;width:1px;height:24px;background:var(--line)"></i>`+[3,6,12].map(s=>`<button class="w${D.size===s?' on':''}" data-w="${s}" aria-label="Товщина"><i style="width:${s+2}px;height:${s+2}px"></i></button>`).join('')+`<button class="w${D.erase?' on':''}" data-e="1" aria-label="Гумка">${ico('eraser')}</button>`}
+function openDraw(){$('#draw').hidden=false;const c=$('#cv'),r=c.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);c.width=Math.round(r.width*d);c.height=Math.round(r.height*d);const x=D.x=c.getContext('2d');x.setTransform(d,0,0,d,0,0);x.fillStyle='#fff';x.fillRect(0,0,r.width,r.height);x.lineCap=x.lineJoin='round';D.stack=[];D.box=null;D.erase=false;D.dpr=d;drawTools()}
+function closeDraw(){$('#draw').hidden=true}
+(()=>{const c=$('#cv'),pos=e=>{const r=c.getBoundingClientRect();return{x:e.clientX-r.left,y:e.clientY-r.top}};
+ c.addEventListener('pointerdown',e=>{e.preventDefault();c.setPointerCapture(e.pointerId);D.down=true;D.last=pos(e);if(D.stack.length>=15)D.stack.shift();D.stack.push(D.x.getImageData(0,0,c.width,c.height));seg(D.last,D.last)});
+ c.addEventListener('pointermove',e=>{if(!D.down)return;const p=pos(e);seg(D.last,p);D.last=p});
+ const up=()=>{D.down=false};c.addEventListener('pointerup',up);c.addEventListener('pointercancel',up);
+ function seg(a,b){const x=D.x,w=D.erase?D.size*4:D.size;x.strokeStyle=D.erase?'#fff':D.color;x.lineWidth=w;x.beginPath();x.moveTo(a.x,a.y);x.lineTo(b.x+.01,b.y+.01);x.stroke();if(!D.erase){const B=D.box||(D.box={l:1e9,t:1e9,r:-1e9,b:-1e9});B.l=Math.min(B.l,a.x-w,b.x-w);B.t=Math.min(B.t,a.y-w,b.y-w);B.r=Math.max(B.r,a.x+w,b.x+w);B.b=Math.max(B.b,a.y+w,b.y+w)}}
+ $('#dTools').addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.k){D.color=b.dataset.k;D.erase=false}if(b.dataset.w)D.size=+b.dataset.w;if(b.dataset.e)D.erase=!D.erase;drawTools()});
+ $('#dUndo').onclick=()=>{const s=D.stack.pop();if(s)D.x.putImageData(s,0,0)};
+ $('#dClear').onclick=()=>{const r=c.getBoundingClientRect();D.stack.push(D.x.getImageData(0,0,c.width,c.height));D.x.fillStyle='#fff';D.x.fillRect(0,0,r.width,r.height);D.box=null};
+ $('#dClose').onclick=closeDraw;
+ $('#dDone').onclick=()=>{const B=D.box;closeDraw();if(!B)return;const d=D.dpr,pad=14,l=Math.max(0,(B.l-pad)*d)|0,t=Math.max(0,(B.t-pad)*d)|0,w=Math.min(c.width-l,(B.r-B.l+pad*2)*d)|0,h=Math.min(c.height-t,(B.b-B.t+pad*2)*d)|0;if(w<2||h<2)return;const o=document.createElement('canvas');o.width=w;o.height=h;o.getContext('2d').drawImage(c,l,t,w,h,0,0,w,h);insertHTML(`<img src="${o.toDataURL('image/png')}"><div><br></div>`);ed.blur()}})();
+
+/* ================= reminders ================= */
+function checkRem(){const now=Date.now();notes.filter(n=>!n.deleted&&n.remind&&!n.reminded&&n.remind<=now).forEach(n=>{n.reminded=true;DB.put(n);toast('🔔 '+(n.title||'Нагадування'),'Відкрити',()=>{if(cur)closeEditor();openNote(n.id)});
+ if(window.Notification&&Notification.permission==='granted'&&navigator.serviceWorker)navigator.serviceWorker.ready.then(r=>r.showNotification(n.title||'Нагадування',{body:n.text.slice(0,120),icon:'icon-180.png'})).catch(()=>{})})}
+
+/* ================= wiring ================= */
+$('#bMenu').innerHTML=ico('menu');$('#bSet').innerHTML=ico('set');$('#sIc').innerHTML=ico('search');$('#fab').innerHTML=ico('plus');$('#eBack').innerHTML=ico('back');$('#ePin').innerHTML=ico('pin');$('#eFav').innerHTML=ico('star');$('#eMore').innerHTML=ico('more');$('#dClose').innerHTML=ico('x');$('#dUndo').innerHTML=ico('undo');$('#dClear').innerHTML=ico('trash');$('#lockIc').innerHTML=ico('lock');
+$('#bMenu').onclick=()=>drawer(true);$('#shade').onclick=()=>drawer(false);$('#bSet').onclick=openSettings;$('#fab').onclick=()=>newNote();
+$('#eBack').onclick=back;$('#eMore').onclick=()=>cur&&noteMenu(cur,true);
+$('#ePin').onclick=()=>{cur.pinned=!cur.pinned;DB.put(cur);syncEd()};$('#eFav').onclick=()=>{cur.fav=!cur.fav;DB.put(cur);syncEd()};
+$('#q').addEventListener('input',e=>{S.q=e.target.value;render()});
+$('#chips').addEventListener('click',e=>{const b=e.target.closest('.chip');if(!b)return;b.dataset.t==='newf'?addFolder():setFilter(b.dataset.t,b.dataset.id)});
+$('#hint').addEventListener('click',async e=>{if(e.target.closest('#hintX')){cfg.hintOff=true;saveCfg();render()}if(e.target.closest('#emptyTrash')&&await confirmBox('Очистити кошик?','Усі нотатки з кошика буде видалено назавжди.','Очистити')){for(const n of notes.filter(x=>x.deleted))DB.del(n.id);notes=notes.filter(x=>!x.deleted);render()}});
+$('#drawer').addEventListener('click',e=>{const fe=e.target.closest('.fedit');if(fe){editFolder(fe.dataset.f);return}if(e.target.closest('#dAddF')){drawer(false);addFolder();return}const r=e.target.closest('.drow');if(!r)return;drawer(false);r.dataset.t==='settings'?openSettings():setFilter(r.dataset.t,r.dataset.id)});
+(()=>{const c=$('#cards');let timer=0,held=false;const act=id=>{const n=notes.find(x=>x.id===id);if(!n)return;n.deleted?trashMenu(n):noteMenu(n,false)};
+ c.addEventListener('touchstart',e=>{const el=e.target.closest('.card');held=false;clearTimeout(timer);if(el)timer=setTimeout(()=>{held=true;navigator.vibrate&&navigator.vibrate(10);act(el.dataset.id)},480)},{passive:true});
+ ['touchmove','touchend','touchcancel'].forEach(ev=>c.addEventListener(ev,()=>clearTimeout(timer),{passive:true}));
+ c.addEventListener('contextmenu',e=>{const el=e.target.closest('.card');if(el){e.preventDefault();if(!held)act(el.dataset.id)}});
+ c.addEventListener('click',e=>{const el=e.target.closest('.card');if(!el)return;if(held){held=false;return}const n=notes.find(x=>x.id===el.dataset.id);if(n)n.deleted?trashMenu(n):openNote(n.id)})})();
+if(window.visualViewport){const f=()=>{const s=document.documentElement.style;s.setProperty('--vvh',visualViewport.height+'px');s.setProperty('--vvt',visualViewport.offsetTop+'px')};visualViewport.addEventListener('resize',f);visualViewport.addEventListener('scroll',f);f()}
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hidAt=Date.now();saveNow();BG.stop()}else{BG.update();if(cfg.pin&&Date.now()-hidAt>60000)lockNow();checkRem();if(!cur)render()}});
+addEventListener('pagehide',saveNow);
+
+/* ================= start ================= */
+(async()=>{BG.init();applyTheme();try{document.execCommand('defaultParagraphSeparator',false,'div')}catch(e){}
+ if(cfg.pin)lockNow();
+ try{await DB.open();notes=(await DB.all()).map(n=>({tags:[],todo:[0,0],text:'',html:'',...n}))}catch(e){toast('Сховище недоступне — нотатки не збережуться')}
+ const month=Date.now()-30*864e5;for(const n of notes.filter(x=>x.deleted&&x.deleted<month))DB.del(n.id);notes=notes.filter(x=>!x.deleted||x.deleted>=month);
+ if(!cfg.seeded){cfg.seeded=true;saveCfg();if(!notes.length){const html='<div>Це твій особистий нотатник. Ось що він уміє:</div><ul class="todo"><li class="done">Списки справ — торкнись квадратика</li><li>Фото та малюнки прямо в нотатці</li><li>Папки, теги, кольори та обране</li><li>Нагадування і шаблони (меню «⋯»)</li><li>Код-пароль і темна тема в налаштуваннях</li></ul><div>Утримуй нотатку у списку, щоб відкрити швидкі дії.</div>';const now=Date.now();const n=cleanNote({id:uid(),title:'Привіт! 💌',html,pinned:true,color:NC[1],created:now,updated:now});notes.push(n);DB.put(n)}}
+ render(true);checkRem();setInterval(checkRem,30000);
+ if(navigator.storage&&navigator.storage.persist)navigator.storage.persist().catch(()=>{});
+ if('serviceWorker'in navigator&&(location.protocol==='https:'||location.hostname==='localhost'||location.hostname==='127.0.0.1'))navigator.serviceWorker.register('sw.js').catch(()=>{})})();
+</script>
+<script src="life.js"></script>
+</body>
+</html>
