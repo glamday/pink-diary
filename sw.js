@@ -1,4 +1,4 @@
-const C = 'notatky-v6';
+const C = 'notatky-v7';
 const FONTS = 'notatky-fonts';
 const ASSETS = ['./', 'index.html', 'life.css', 'glam.css', 'life.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 
@@ -29,7 +29,7 @@ self.addEventListener('fetch', e => {
   }
   if (new URL(req.url).origin !== location.origin) return;
   e.respondWith(
-    fetch(req)
+    fetch(req.url, { cache: 'no-cache' })
       .then(res => {
         if (res.ok) {
           const copy = res.clone();

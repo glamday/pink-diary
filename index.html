@@ -264,6 +264,7 @@ h1{font:700 32px/1.12 var(--serif);margin:6px 0 4px;letter-spacing:-.01em;text-w
 /* ================= helpers ================= */
 const $=(s,r=document)=>r.querySelector(s),$$=(s,r=document)=>[...r.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const setH=(el,h)=>{window.morph?morph(el,h):el.innerHTML=h};
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,8);
 const I={
  menu:'<path d="M4 7h16M4 12h16M4 17h10"/>',search:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/>',plus:'<path d="M12 5v14M5 12h14"/>',back:'<path d="m15 5-7 7 7 7"/>',
@@ -398,7 +399,7 @@ mq.addEventListener('change',applyTheme);
 
 /* ================= UI primitives ================= */
 function toast(msg,act,fn){const t=document.createElement('div');t.className='toast';t.innerHTML=`<span>${esc(msg)}</span>${act?`<button>${esc(act)}</button>`:''}`;document.body.append(t);requestAnimationFrame(()=>t.classList.add('in'));const kill=()=>{t.classList.remove('in');setTimeout(()=>t.remove(),260)};if(act)t.querySelector('button').onclick=()=>{kill();fn()};setTimeout(kill,act?6000:2200)}
-function sheet(render){const w=document.createElement('div');w.className='sheet-wrap';w.innerHTML='<div class="sheet"></div>';const s=w.firstChild;w.draw=()=>{const y=s.scrollTop;s.innerHTML='<div class="grab"></div>'+render();s.scrollTop=y};w.draw();document.body.append(w);requestAnimationFrame(()=>w.classList.add('in'));w.close=()=>{w.classList.remove('in');setTimeout(()=>w.remove(),220);w.onclose&&w.onclose()};w.addEventListener('click',e=>{if(e.target===w)w.close()});return w}
+function sheet(render){const w=document.createElement('div');w.className='sheet-wrap';w.innerHTML='<div class="sheet"></div>';const s=w.firstChild;w.draw=()=>{const y=s.scrollTop;setH(s,'<div class="grab"></div>'+render());s.scrollTop=y};w.draw();document.body.append(w);requestAnimationFrame(()=>w.classList.add('in'));w.close=()=>{w.classList.remove('in');setTimeout(()=>w.remove(),220);w.onclose&&w.onclose()};w.addEventListener('click',e=>{if(e.target===w)w.close()});return w}
 function ask(title,val='',ph=''){return new Promise(res=>{const w=sheet(()=>`<h3>${esc(title)}</h3><input class="field" value="${esc(val)}" placeholder="${esc(ph)}" maxlength="40"><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn pri" data-a="ok">Готово</button></div>`);let done=false;const inp=$('input',w);setTimeout(()=>inp.focus(),250);const fin=v=>{if(done)return;done=true;res(v);w.close()};w.onclose=()=>fin(null);inp.onkeydown=e=>{if(e.key==='Enter')fin(inp.value.trim())};w.addEventListener('click',e=>{const a=e.target.dataset?.a;if(a==='ok')fin(inp.value.trim());if(a==='no')fin(null)})})}
 function confirmBox(title,text,ok='Так',danger=true){return new Promise(res=>{const w=sheet(()=>`<h3>${esc(title)}</h3><p class="note" style="font-size:15px">${esc(text)}</p><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn ${danger?'red':'pri'}" data-a="ok">${esc(ok)}</button></div>`);let done=false;const fin=v=>{if(done)return;done=true;res(v);w.close()};w.onclose=()=>fin(false);w.addEventListener('click',e=>{const a=e.target.dataset?.a;if(a==='ok')fin(true);if(a==='no')fin(false)})})}
 
@@ -423,11 +424,11 @@ function render(anim){const f=S.filter,a=visible(),live=notes.filter(n=>!n.delet
  const h=new Date().getHours(),g=h<5?'Доброї ночі':h<12?'Доброго ранку':h<17?'Добрий день':'Добрий вечір';
  if(f.type==='all')$('#hTitle').textContent='Нотатки';
  $('#hSub').textContent=f.type==='all'?`${live} ${pl(live,NOTEW)}`:f.type==='trash'?'Нотатки зберігаються тут 30 днів':`${a.length} ${pl(a.length,NOTEW)}`;
- $('#chips').innerHTML=[['all','','Усі'],['fav','','★ Обране'],...cfg.folders.map(x=>['folder',x.id,x.name])].map(([t,id,l])=>`<button class="chip${f.type===t&&f.id===id?' on':''}" data-t="${t}" data-id="${esc(id)}">${esc(l)}</button>`).join('')+'<button class="chip add" data-t="newf">+ Папка</button>';
+ setH($('#chips'),[['all','','Усі'],['fav','','★ Обране'],...cfg.folders.map(x=>['folder',x.id,x.name])].map(([t,id,l])=>`<button class="chip${f.type===t&&f.id===id?' on':''}" data-t="${t}" data-id="${esc(id)}">${esc(l)}</button>`).join('')+'<button class="chip add" data-t="newf">+ Папка</button>');
  let hint='';if(f.type==='trash'&&a.length)hint='<button class="wide" id="emptyTrash" style="color:#e5484d">Очистити кошик</button>';
  else if(!cfg.hintOff&&/iphone|ipad|ipod/i.test(navigator.userAgent)&&!navigator.standalone)hint=`<div class="hint"><div>📲 Щоб користуватися як застосунком: натисни <b>Поділитися</b> у Safari → <b>На початковий екран</b>.</div><button id="hintX">${ico('x')}</button></div>`;
- $('#hint').innerHTML=hint;const c=$('#cards');c.className='cards '+cfg.view+(anim?' anim':'');
- c.innerHTML=a.length?a.map((n,i)=>card(n,i)).join(''):`<div class="empty" style="column-span:all"><b>${S.q?'Нічого не знайдено':f.type==='trash'?'Кошик порожній':'Тут поки порожньо'}</b>${S.q||f.type==='trash'?'':'Натисни +, щоб створити першу нотатку'}</div>`;
+ setH($('#hint'),hint);const c=$('#cards');c.className='cards '+cfg.view+(anim?' anim':'');
+ setH(c,a.length?a.map((n,i)=>card(n,i)).join(''):`<div class="empty" style="column-span:all"><b>${S.q?'Нічого не знайдено':f.type==='trash'?'Кошик порожній':'Тут поки порожньо'}</b>${S.q||f.type==='trash'?'':'Натисни +, щоб створити першу нотатку'}</div>`);
  $('#fab').hidden=f.type==='trash'}
 function setFilter(type,id=''){S.filter={type,id};render(true);$('.scroll').scrollTop=0}
 async function addFolder(){const name=await ask('Нова папка','','Назва папки');if(!name)return;const f={id:uid(),name};cfg.folders.push(f);saveCfg();setFilter('folder',f.id);renderDrawer()}
