@@ -1,4 +1,4 @@
-const C = 'notatky-v5';
+const C = 'notatky-v6';
 const FONTS = 'notatky-fonts';
 const ASSETS = ['./', 'index.html', 'life.css', 'glam.css', 'life.js', 'manifest.webmanifest', 'icon-180.png', 'icon-512.png'];
 

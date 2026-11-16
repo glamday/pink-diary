@@ -84,6 +84,36 @@ function hstreak(id) { let k = dkey(), n = 0; if (!hdone(id, k)) k = addDays(k, 
 const tile = (v, l) => `<div class="tile"><b>${v}</b><span>${l}</span></div>`;
 const head = (emo, title, meta = '') => `<div class="c-head"><i class="c-ico">${emo}</i><h2>${title}</h2>${meta ? `<span>${meta}</span>` : ''}</div>`;
 
+/* ================= in-place DOM patching ================= */
+// Замість заміни всього екрана змінюємо лише те, що відрізняється: вузли лишаються на місці,
+// тож анімація появи не програється заново, а CSS-переходи (смужки, кільце, галочки) йдуть плавно.
+const keyOf = n => (n.nodeType === 1 ? n.getAttribute('data-id') || n.getAttribute('data-k') || '' : '');
+const alike = (a, b) => a.nodeType === b.nodeType && (a.nodeType !== 1 || (a.tagName === b.tagName && keyOf(a) === keyOf(b)));
+function patchNode(x, y) {
+  if (x.nodeType !== 1) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; return; }
+  for (const at of [...x.attributes]) if (!y.hasAttribute(at.name)) x.removeAttribute(at.name);
+  for (const at of [...y.attributes]) if (x.getAttribute(at.name) !== at.value) { x.setAttribute(at.name, at.value); if (at.name === 'value' && 'value' in x) x.value = at.value; }
+  // Текст, який людина набирає в полі, не чіпаємо; оновлюємо лише поле з готовим кодом.
+  if (x.tagName === 'TEXTAREA') { if (x.readOnly) x.value = y.value; return; }
+  patchKids(x, y);
+}
+function patchKids(a, b) {
+  let x = a.firstChild, y = b.firstChild;
+  while (y) {
+    const ny = y.nextSibling;
+    if (x && alike(x, y)) { patchNode(x, y); x = x.nextSibling; }
+    else {
+      let found = null;
+      if (x && keyOf(y)) for (let m = x.nextSibling; m; m = m.nextSibling) if (alike(m, y)) { found = m; break; }
+      if (found) { while (x !== found) { const nx = x.nextSibling; a.removeChild(x); x = nx; } patchNode(x, y); x = x.nextSibling; }
+      else a.insertBefore(y, x);
+    }
+    y = ny;
+  }
+  while (x) { const nx = x.nextSibling; a.removeChild(x); x = nx; }
+}
+function morph(root, html) { const t = document.createElement('template'); t.innerHTML = html; patchKids(root, t.content); }
+
 /* ================= tabs ================= */
 const TABS = [['today', 'sun', 'Сьогодні'], ['plan', 'cal', 'Планер'], ['stats', 'chart', 'Прогрес'], ['notes', 'edit', 'Нотатки'], ['more', 'grid', 'Ще']];
 let TAB = 'today', PAGE = null;
@@ -142,7 +172,7 @@ function drawToday() {
   } else {
     o += `<section class="box locked"><i class="c-ico">🌙</i><div><b>Вечірня мотивація</b><span>Відкриється о 18:00 разом із трьома полями вдячності</span></div></section>`;
   }
-  $('#pgToday').innerHTML = o;
+  morph($('#pgToday'), o);
 }
 
 /* ================= planner ================= */
@@ -153,7 +183,7 @@ function drawPlan() {
   let o = `<header class="p-head"><h1>Планер</h1><button class="rb" data-a="wk-prev" aria-label="Попередній тиждень">${ico('back')}</button><button class="pillb" data-a="wk-today">Сьогодні</button><button class="rb" data-a="wk-next" aria-label="Наступний тиждень">${ico('right')}</button></header>`;
   o += `<div class="week">${Array.from({ length: 7 }, (_, i) => { const k = addDays(ws, i), pc = pct(k); return `<button class="${k === P.sel ? 'on' : ''}${k === t ? ' today' : ''}" data-a="day" data-k="${k}">${wd(k)}<b>${dparse(k).getDate()}</b><i><u style="width:${pc || 0}%"></u></i></button>`; }).join('')}</div>`;
   o += `<section class="box">${head('🗓️', (P.sel === t ? 'Сьогодні, ' : '') + fD(P.sel, { weekday: P.sel === t ? undefined : 'long', day: 'numeric', month: 'long' }), ts.length ? p + '%' : '')}${ts.length ? `<div class="bar"><i style="width:${p}%"></i></div><ul class="tasks">${ts.map(taskRow).join('')}</ul>` : '<p class="none">На цей день справ немає.</p>'}<div class="cats">${Object.keys(CATS).map(c => `<button class="${P.cat === c ? 'on' : ''}" style="--k:${CATS[c][1]}" data-a="pcat" data-v="${c}">${CATS[c][0]}</button>`).join('')}</div><form class="quick" data-f="task" data-date="${P.sel}" data-cat="${P.cat}"><input name="t" placeholder="Нова справа…" maxlength="120" autocomplete="off" enterkeyhint="done"><button aria-label="Додати">${ico('plus')}</button></form>${ts.some(x => !x.done) ? '<button class="ghost" data-a="carry">Перенести незроблене на завтра</button>' : ''}</section>`;
-  $('#pgPlan').innerHTML = o;
+  morph($('#pgPlan'), o);
 }
 
 /* ================= progress ================= */
@@ -184,13 +214,13 @@ function drawStats() {
   o += `<section class="box">${head('📊', 'Статистика місяця')}<div class="tiles">${tile(s.done, 'справ зроблено')}${tile(s.pct + '%', 'виконання')}${tile(s.water, 'склянок води')}${tile(s.habits, 'відміток звичок')}${tile(s.grat, 'днів вдячності')}${tile(s.mood ? s.mood[1] + ' ' + s.mood[2] : '—', 'частий настрій')}</div></section>`;
   const ac = achievements(), got = ac.filter(a => a[2] >= a[3]).length;
   o += `<section class="box">${head('🏅', 'Досягнення', `${got} з ${ac.length}`)}${ac.map(([e, n, v, need]) => `<div class="ach ${v >= need ? 'got' : 'off'}"><i>${e}</i><div><b>${n}</b><span>${v >= need ? 'Отримано' : `Ще ${need - v}`}</span></div><em>${Math.min(v, need)}/${need}</em></div>`).join('')}</section>`;
-  $('#pgStats').innerHTML = o;
+  morph($('#pgStats'), o);
 }
 
 /* ================= more ================= */
 function drawMore() {
   const items = [['habits', '🌱', 'Звички', `${L.habits.length} ${pl(L.habits.length, ['звичка', 'звички', 'звичок'])}`], ['goals', '🎯', 'Цілі', 'На рік і місяць'], ['joy', '🫙', 'Банка радості', `${L.joys.length} ${pl(L.joys.length, ['момент', 'моменти', 'моментів'])}`], ['capsule', '💌', 'Капсула часу', 'Лист собі в майбутнє'], ['dreams', '✨', 'Мрії', `${L.dreams.filter(d => d.done).length} з ${L.dreams.length} здійснилось`], ['cycle', '🌸', 'Цикл', 'Календар і прогноз'], ['summary', '📊', 'Підсумки', 'Місяць і рік'], ['backup', '☁️', 'Резервна копія', 'Зберегти й відновити'], ['settings', '⚙️', 'Налаштування', 'Імʼя, вода, вигляд']];
-  $('#pgMore').innerHTML = `<header class="p-head"><h1>Ще</h1></header><div class="more">${items.map(([p, e, n, s]) => `<button data-a="${p === 'settings' ? 'settings' : 'page'}" data-p="${p}"><i>${e}</i><b>${n}</b><span>${s}</span></button>`).join('')}</div>`;
+  morph($('#pgMore'), `<header class="p-head"><h1>Ще</h1></header><div class="more">${items.map(([p, e, n, s]) => `<button data-a="${p === 'settings' ? 'settings' : 'page'}" data-p="${p}"><i>${e}</i><b>${n}</b><span>${s}</span></button>`).join('')}</div>`);
 }
 
 /* ================= pages ================= */
@@ -199,12 +229,12 @@ let hemo = 0, GP = 'year', CP = 3, SP = 'month', BK = '';
 const CM = { y: new Date().getFullYear(), m: new Date().getMonth() };
 const gkey = () => GP === 'year' ? String(new Date().getFullYear()) : dkey().slice(0, 7);
 const segs = (a, cur, list) => `<div class="seg" style="margin-bottom:14px">${list.map(([v, l]) => `<button data-a="${a}" data-v="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-function openPage(p) { PAGE = p; BK = ''; drawPage(); const el = $('#page'); el.scrollTop = 0; el.classList.add('in'); history.pushState({ pg: 1 }, ''); }
+function openPage(p) { PAGE = p; BK = ''; $('#page').innerHTML = ''; drawPage(); const el = $('#page'); el.scrollTop = 0; el.classList.add('in'); history.pushState({ pg: 1 }, ''); }
 function closePage() { if (!PAGE) return; PAGE = null; $('#page').classList.remove('in'); draw(); }
 addEventListener('popstate', () => { if (PAGE && !cur) closePage(); });
 function drawPage() {
   if (!PAGE) return;
-  $('#page').innerHTML = `<div class="pbar"><button class="ib" data-a="back" aria-label="Назад">${ico('back')}</button><h2>${PT[PAGE]}</h2></div><div class="pg">${PAGES[PAGE]()}</div>`;
+  morph($('#page'), `<div class="pbar"><button class="ib" data-a="back" aria-label="Назад">${ico('back')}</button><h2>${PT[PAGE]}</h2></div><div class="pg">${PAGES[PAGE]()}</div>`);
 }
 function cycleInfo() {
   const s = [...new Set(L.cycle.starts)].sort(), t = dkey();
@@ -497,6 +527,7 @@ function formAct(f) {
     case 'restore': if (!v) return; readCode(v).then(async d => { if (!await confirmBox('Відновити з коду?', 'Поточні дані щоденника буде замінено даними з коду. Нотатки додадуться до наявних.', 'Відновити', false)) return; await applyCode(d); render(); toast('Дані відновлено'); }).catch(() => toast('Код не підходить або пошкоджений')); return;
     default: return;
   }
+  if (f.isConnected) f.reset();
   saveL(); lifeRefresh();
   if (f.dataset.f === 'task') { const i = $(`#app>.tab.on form[data-f=task] input`); if (i) i.focus(); }
 }

@@ -19,6 +19,17 @@
 #tabs button.on span{background:color-mix(in srgb,var(--acc) 16%,transparent)}
 #tabs button.on .ic{stroke-width:2.2}
 
+/* ============ smooth state changes ============ */
+.task,.item,.support,.hchips button,.ach{animation:pop .3s cubic-bezier(.2,.8,.2,1) backwards}
+@keyframes pop{from{opacity:0;transform:translateY(8px)}}
+.chk,.moods button,.hchips button,.week button,.week b,.cats button,#tabs button span,.h7 i,.seg button,.rb,.cal div{transition:background-color .22s,color .22s,border-color .22s,box-shadow .22s}
+.glasses svg{transition:fill .25s}
+.glasses button{transition:color .25s,transform .15s}
+.t-main span{transition:color .22s}
+.chk .ic{transition:transform .25s cubic-bezier(.3,1.6,.5,1)}
+.task:not(.done)>.chk .ic{transform:scale(.3)}
+.cnt b,.c-head>span,.ringw b,.stats4 b{transition:opacity .2s}
+
 /* ============ common ============ */
 .t-head{display:flex;align-items:flex-start;gap:8px;margin-bottom:18px}
 .t-head>div{flex:1;min-width:0}
