@@ -553,13 +553,19 @@ function openSettings(){const seg=(key,opts)=>`<div class="seg">${opts.map(([v,l
   if(a==='exp')exportAll();if(a==='imp')$('#impFile').click();
   if(a==='pin'){w.close();if(cfg.pin){const p=await pinPad('Введи поточний код',true);$('#lock').hidden=true;if(p===null)return;if(await hash(p)!==cfg.pin){toast('Невірний код');return}cfg.pin=null;saveCfg();toast('Код-пароль вимкнено')}
    else{const p1=await pinPad('Придумай код із 4 цифр',true);if(p1===null){$('#lock').hidden=true;return}const p2=await pinPad('Повтори код',true);$('#lock').hidden=true;if(p2===null)return;if(p1!==p2){toast('Коди не збігаються');return}cfg.salt=uid();cfg.pin=await hash(p1);saveCfg();toast('Код-пароль увімкнено')}}})}
-async function exportAll(){const name=`notatky-${new Date().toISOString().slice(0,10)}.json`,file=new File([JSON.stringify({app:'notatky',v:1,exported:Date.now(),folders:cfg.folders,notes,life:window.lifeData?lifeData():null,prefs:{name:cfg.name,waterGoal:cfg.waterGoal,birthday:cfg.birthday}})],name,{type:'application/json'});
- if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}
- const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),8000)}
+async function saveFile(file){if(/iphone|ipad|ipod/i.test(navigator.userAgent)&&navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file]});return}catch(e){if(e.name==='AbortError')return}}
+ const a=document.createElement('a');a.href=URL.createObjectURL(file);a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),8000)}
+async function exportAll(){const name=`notatky-${new Date().toISOString().slice(0,10)}.json`,base=JSON.stringify({app:'notatky',v:1,exported:Date.now(),folders:cfg.folders,notes,life:window.lifeData?lifeData():null,prefs:{name:cfg.name,waterGoal:cfg.waterGoal,birthday:cfg.birthday}});
+ const n=window.photoCount?photoCount():0;
+ if(!n){saveFile(new File([base],name,{type:'application/json'}));return}
+ toast('Готую копію разом із фото…');let parts;try{parts=await photoBackupParts()}catch(e){toast('Не вдалося підготувати фото');return}
+ const file=new File([base.slice(0,-1),',"photos":[',...parts.flatMap((p,i)=>i?[',',p]:[p]),']}'],name,{type:'application/json'}),mb=(file.size/1048576).toFixed(1).replace('.',',');
+ const w=sheet(()=>`<h3>Копія готова</h3><p class="note" style="font-size:15px">Усі дані, нотатки і фото дня (${n} шт.). Розмір файлу: ${mb} МБ.</p><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn pri" data-a="ok">Зберегти файл</button></div>`);
+ w.addEventListener('click',e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(a==='ok'){w.close();saveFile(file)}if(a==='no')w.close()})}
 $('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d||d.app!=='notatky'||!Array.isArray(d.notes))throw 0;
  (Array.isArray(d.folders)?d.folders:[]).forEach(x=>{if(x&&x.id&&x.name&&!cfg.folders.some(y=>y.id===x.id))cfg.folders.push({id:String(x.id).replace(/[^\w-]/g,'').slice(0,40),name:String(x.name).slice(0,40)})});saveCfg();
  let k=0;for(const raw of d.notes){const n=cleanNote(raw);if(!n)continue;const old=notes.find(x=>x.id===n.id);if(old&&old.updated>=n.updated)continue;if(old)notes[notes.indexOf(old)]=n;else notes.push(n);await DB.put(n);k++}
- if(d.life&&window.lifeImport)lifeImport(d.life,d.prefs);render();toast(`Відновлено: ${k} ${pl(k,NOTEW)}`)}catch(err){toast('Це не схоже на файл копії нотаток')}});
+ if(d.life&&window.lifeImport)lifeImport(d.life,d.prefs);let ph=0;if(Array.isArray(d.photos)&&window.photosImport)ph=await photosImport(d.photos);render();toast(`Відновлено: ${k} ${pl(k,NOTEW)}${ph?`, фото дня: ${ph}`:''}`)}catch(err){toast('Це не схоже на файл копії нотаток')}});
 
 /* ================= lock ================= */
 let locked=false,hidAt=0;

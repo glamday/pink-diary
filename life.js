@@ -92,7 +92,7 @@ const alike = (a, b) => a.nodeType === b.nodeType && (a.nodeType !== 1 || (a.tag
 function patchNode(x, y) {
   if (x.nodeType !== 1) { if (x.nodeValue !== y.nodeValue) x.nodeValue = y.nodeValue; return; }
   for (const at of [...x.attributes]) if (!y.hasAttribute(at.name)) x.removeAttribute(at.name);
-  for (const at of [...y.attributes]) if (x.getAttribute(at.name) !== at.value) { x.setAttribute(at.name, at.value); if (at.name === 'value' && 'value' in x) x.value = at.value; }
+  for (const at of [...y.attributes]) if (x.getAttribute(at.name) !== at.value) { x.setAttribute(at.name, at.value); if (at.name === 'value' && 'value' in x && x.value !== at.value) x.value = at.value; }
   // Текст, який людина набирає в полі, не чіпаємо; оновлюємо лише поле з готовим кодом.
   if (x.tagName === 'TEXTAREA') { if (x.readOnly) x.value = y.value; return; }
   patchKids(x, y);
@@ -160,6 +160,8 @@ function drawToday() {
   const md = L.mood[k];
   o += `<section class="box">${head('💭', 'Настрій дня')}<div class="moods">${MOODS.map(m => `<button class="${md === m[0] ? 'on' : ''}" data-a="mood" data-v="${m[0]}"><b>${m[1]}</b>${m[2]}</button>`).join('')}</div>${md === 'sad' ? `<div class="support"><p>${SUPPORT[di % SUPPORT.length]}</p><div class="btnrow"><button class="pillb pri" data-a="breath">Подихати разом</button><button class="pillb" data-a="joy-rand">Відкрити банку радості</button></div></div>` : ''}</section>`;
 
+  o += photoCard(k);
+
   o += `<section class="box">${head('💧', 'Вода', `${w} з ${goal} склянок`)}<div class="glasses">${Array.from({ length: goal }, (_, i) => `<button class="${i < w ? 'on' : ''}" data-a="water" data-i="${i}" aria-label="Склянка ${i + 1}"><svg viewBox="0 0 24 30"><path d="M4 3h16l-2 24H6z"/></svg></button>`).join('')}</div></section>`;
 
   const hd = L.habits.filter(x => hdone(x.id, k)).length;
@@ -193,7 +195,7 @@ function statsFor(pre) {
   const ts = L.tasks.filter(t => t.date.startsWith(pre)), done = ts.filter(t => t.done).length, moods = {};
   ks(L.mood).forEach(k => { moods[L.mood[k]] = (moods[L.mood[k]] || 0) + 1; });
   const top = Object.keys(moods).sort((a, b) => moods[b] - moods[a])[0];
-  return { total: ts.length, done, pct: ts.length ? Math.round(done / ts.length * 100) : 0, water: ks(L.water).reduce((s, k) => s + (L.water[k] | 0), 0), habits: ks(L.habitLog).reduce((s, k) => s + hlog(k).length, 0), grat: ks(L.grat).filter(gratHas).length, joys: L.joys.filter(j => j.date.startsWith(pre)).length, dreams: L.dreams.filter(d => d.done && d.doneAt.startsWith(pre)).length, mood: MOODS.find(m => m[0] === top) };
+  return { total: ts.length, done, pct: ts.length ? Math.round(done / ts.length * 100) : 0, water: ks(L.water).reduce((s, k) => s + (L.water[k] | 0), 0), habits: ks(L.habitLog).reduce((s, k) => s + hlog(k).length, 0), grat: ks(L.grat).filter(gratHas).length, joys: L.joys.filter(j => j.date.startsWith(pre)).length, dreams: L.dreams.filter(d => d.done && d.doneAt.startsWith(pre)).length, photos: phCount(pre), mood: MOODS.find(m => m[0] === top) };
 }
 function achievements() {
   const best = bestStreak(), td = L.tasks.filter(t => t.done).length, goal = wgoal(), wdn = Object.values(L.water).filter(v => v >= goal).length, gd = Object.keys(L.grat).filter(gratHas).length;
@@ -219,12 +221,12 @@ function drawStats() {
 
 /* ================= more ================= */
 function drawMore() {
-  const items = [['habits', '🌱', 'Звички', `${L.habits.length} ${pl(L.habits.length, ['звичка', 'звички', 'звичок'])}`], ['goals', '🎯', 'Цілі', 'На рік і місяць'], ['joy', '🫙', 'Банка радості', `${L.joys.length} ${pl(L.joys.length, ['момент', 'моменти', 'моментів'])}`], ['capsule', '💌', 'Капсула часу', 'Лист собі в майбутнє'], ['dreams', '✨', 'Мрії', `${L.dreams.filter(d => d.done).length} з ${L.dreams.length} здійснилось`], ['cycle', '🌸', 'Цикл', 'Календар і прогноз'], ['summary', '📊', 'Підсумки', 'Місяць і рік'], ['backup', '☁️', 'Резервна копія', 'Зберегти й відновити'], ['settings', '⚙️', 'Налаштування', 'Імʼя, вода, вигляд']];
+  const items = [['photos', '📸', 'Фото дня', `${PH.size} фото`], ['habits', '🌱', 'Звички', `${L.habits.length} ${pl(L.habits.length, ['звичка', 'звички', 'звичок'])}`], ['goals', '🎯', 'Цілі', 'На рік і місяць'], ['joy', '🫙', 'Банка радості', `${L.joys.length} ${pl(L.joys.length, ['момент', 'моменти', 'моментів'])}`], ['capsule', '💌', 'Капсула часу', 'Лист собі в майбутнє'], ['dreams', '✨', 'Мрії', `${L.dreams.filter(d => d.done).length} з ${L.dreams.length} здійснилось`], ['cycle', '🌸', 'Цикл', 'Календар і прогноз'], ['summary', '📊', 'Підсумки', 'Місяць і рік'], ['backup', '☁️', 'Резервна копія', 'Зберегти й відновити'], ['settings', '⚙️', 'Налаштування', 'Імʼя, вода, вигляд']];
   morph($('#pgMore'), `<header class="p-head"><h1>Ще</h1></header><div class="more">${items.map(([p, e, n, s]) => `<button data-a="${p === 'settings' ? 'settings' : 'page'}" data-p="${p}"><i>${e}</i><b>${n}</b><span>${s}</span></button>`).join('')}</div>`);
 }
 
 /* ================= pages ================= */
-const PT = { habits: 'Звички', goals: 'Цілі', joy: 'Банка радості', capsule: 'Капсула часу', dreams: 'Мрії', cycle: 'Цикл', summary: 'Підсумки', backup: 'Резервна копія' };
+const PT = { photos: 'Фото дня', habits: 'Звички', goals: 'Цілі', joy: 'Банка радості', capsule: 'Капсула часу', dreams: 'Мрії', cycle: 'Цикл', summary: 'Підсумки', backup: 'Резервна копія' };
 let hemo = 0, GP = 'year', CP = 3, SP = 'month', BK = '';
 const CM = { y: new Date().getFullYear(), m: new Date().getMonth() };
 const gkey = () => GP === 'year' ? String(new Date().getFullYear()) : dkey().slice(0, 7);
@@ -259,6 +261,7 @@ function cycleMark(k, c) {
   return '';
 }
 const PAGES = {
+  photos() { return photosPage(); },
   habits() {
     const t = dkey();
     return `<p class="lead">Маленькі щоденні кроки. Відмічай їх одним дотиком на вкладці «Сьогодні».</p><section class="box" style="padding-top:6px"><form class="quick" data-key="form" data-f="habit"><button type="button" class="emo" data-a="h-emoji" aria-label="Змінити значок">${HEMO[hemo]}</button><input name="t" placeholder="Нова звичка, напр. «Читати»" maxlength="40" autocomplete="off"><button aria-label="Додати">${ico('plus')}</button></form></section>` + L.habits.map(x => {
@@ -298,10 +301,10 @@ const PAGES = {
   summary() {
     const now = new Date(), pre = SP === 'month' ? dkey().slice(0, 7) : String(now.getFullYear()), s = statsFor(pre);
     const title = SP === 'month' ? monthName(now.getFullYear(), now.getMonth()) : `${now.getFullYear()} рік`;
-    return segs('s-per', SP, [['month', 'Місяць'], ['year', 'Рік']]) + `<section class="box hero" style="display:block"><p class="t-date" style="opacity:.9">Підсумки</p><h1 style="color:#fff;text-shadow:none">${title}</h1><p style="margin:10px 0 0;font-size:15px;position:relative;z-index:1">${s.total ? `Виконано ${s.done} із ${s.total} справ — це ${s.pct}%.` : 'Справ за цей період ще не було.'} ${s.mood ? `Найчастіший настрій: ${s.mood[1]} ${s.mood[2].toLowerCase()}.` : ''}</p></section><section class="box">${head('📊', 'У цифрах')}<div class="tiles">${tile(s.done, 'справ зроблено')}${tile(s.pct + '%', 'виконання')}${tile(s.water, 'склянок води')}${tile(s.habits, 'відміток звичок')}${tile(s.grat, 'днів вдячності')}${tile(s.joys, 'моментів радості')}${tile(s.dreams, 'мрій здійснилось')}${tile(bestStreak(), 'рекорд днів поспіль')}</div></section>`;
+    return segs('s-per', SP, [['month', 'Місяць'], ['year', 'Рік']]) + `<section class="box hero" style="display:block"><p class="t-date" style="opacity:.9">Підсумки</p><h1 style="color:#fff;text-shadow:none">${title}</h1><p style="margin:10px 0 0;font-size:15px;position:relative;z-index:1">${s.total ? `Виконано ${s.done} із ${s.total} справ — це ${s.pct}%.` : 'Справ за цей період ще не було.'} ${s.mood ? `Найчастіший настрій: ${s.mood[1]} ${s.mood[2].toLowerCase()}.` : ''}</p></section><section class="box">${head('📊', 'У цифрах')}<div class="tiles">${tile(s.done, 'справ зроблено')}${tile(s.pct + '%', 'виконання')}${tile(s.water, 'склянок води')}${tile(s.habits, 'відміток звичок')}${tile(s.grat, 'днів вдячності')}${tile(s.joys, 'моментів радості')}${tile(s.dreams, 'мрій здійснилось')}${tile(s.photos, 'днів у фото')}${tile(bestStreak(), 'рекорд днів поспіль')}</div></section>`;
   },
   backup() {
-    return `<p class="lead">Усі дані зберігаються тільки на цьому телефоні. Резервна копія допоможе перенести їх на інший пристрій або відновити.</p><section class="box">${head('🔄', 'Автоматична копія', 'раз на день')}<p class="none" data-key="none">${Auto.info ? `Остання копія: ${new Date(Auto.info.at).toLocaleString('uk-UA', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, нотаток у ній: ${Auto.info.notes}.` : 'Першу копію буде створено, щойно зʼявляться дані.'} Створюється сама, нова копія замінює стару.</p><div class="btnrow"><button class="pillb pri" data-a="au-make">Оновити зараз</button>${Auto.info ? '<button class="pillb" data-a="au-restore">Відновити з неї</button>' : ''}</div><p class="hintp" data-key="hint">Копія лежить у памʼяті застосунку на цьому телефоні. Вона врятує після помилки чи невдалого відновлення, але зникне разом із застосунком, якщо його видалити або очистити дані сайтів у Safari. Для такого випадку збережи код або файл нижче.</p></section><section class="box">${head('🔑', 'Копія кодом')}<p class="none" data-key="none">Код містить справи, звички, настрій, цілі, мрії, цикл і тексти нотаток (без фото).</p><button class="main-btn" data-a="code-share">Зберегти код у Нотатки</button><p class="hintp" data-key="hint">Відкриється меню «Поділитися» — вибери «Нотатки» і натисни «Зберегти».${L.seen.codeAt ? ` Востаннє зберігала ${new Date(+L.seen.codeAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}.` : ''}</p><button class="ghost" data-a="bk-make">Показати код тут</button>${BK ? `<textarea class="area code" readonly style="margin-top:12px">${esc(BK)}</textarea><button class="ghost" data-a="bk-copy">Скопіювати код</button><p class="hintp" data-key="hint">Збережи код у надійному місці, наприклад надішли собі в месенджері.</p>` : ''}</section><section class="box">${head('↩️', 'Відновити з коду')}<form data-f="restore"><textarea class="area code" name="t" placeholder="Встав сюди код"></textarea><button class="main-btn">Відновити</button></form><p class="hintp" data-key="hint">Дані щоденника буде замінено даними з коду.</p></section><section class="box">${head('📁', 'Копія файлом')}<p class="none" data-key="none">Повна копія разом із фото в нотатках.</p><div class="btnrow"><button class="pillb" data-a="bk-file">Зберегти файл</button><button class="pillb" data-a="bk-import">Відновити з файлу</button></div></section>`;
+    return `<p class="lead">Усі дані зберігаються тільки на цьому телефоні. Резервна копія допоможе перенести їх на інший пристрій або відновити.</p><section class="box">${head('🔄', 'Автоматична копія', 'раз на день')}<p class="none" data-key="none">${Auto.info ? `Остання копія: ${new Date(Auto.info.at).toLocaleString('uk-UA', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, нотаток у ній: ${Auto.info.notes}.` : 'Першу копію буде створено, щойно зʼявляться дані.'} Створюється сама, нова копія замінює стару.</p><div class="btnrow"><button class="pillb pri" data-a="au-make">Оновити зараз</button>${Auto.info ? '<button class="pillb" data-a="au-restore">Відновити з неї</button>' : ''}</div><p class="hintp" data-key="hint">Копія лежить у памʼяті застосунку на цьому телефоні. Вона врятує після помилки чи невдалого відновлення, але зникне разом із застосунком, якщо його видалити або очистити дані сайтів у Safari. Для такого випадку збережи код або файл нижче.</p></section><section class="box">${head('🔑', 'Копія кодом')}<p class="none" data-key="none">Код містить справи, звички, настрій, цілі, мрії, цикл і тексти нотаток (без фото).</p><button class="main-btn" data-a="code-share">Зберегти код у Нотатки</button><p class="hintp" data-key="hint">Відкриється меню «Поділитися» — вибери «Нотатки» і натисни «Зберегти».${L.seen.codeAt ? ` Востаннє зберігала ${new Date(+L.seen.codeAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}.` : ''}</p><button class="ghost" data-a="bk-make">Показати код тут</button>${BK ? `<textarea class="area code" readonly style="margin-top:12px">${esc(BK)}</textarea><button class="ghost" data-a="bk-copy">Скопіювати код</button><p class="hintp" data-key="hint">Збережи код у надійному місці, наприклад надішли собі в месенджері.</p>` : ''}</section><section class="box">${head('↩️', 'Відновити з коду')}<form data-f="restore"><textarea class="area code" name="t" placeholder="Встав сюди код"></textarea><button class="main-btn">Відновити</button></form><p class="hintp" data-key="hint">Дані щоденника буде замінено даними з коду.</p></section><section class="box">${head('📁', 'Копія файлом')}<p class="none" data-key="none">Повна копія: усі дані, фото в нотатках і фото дня.</p><div class="btnrow"><button class="pillb" data-a="bk-file">Зберегти файл</button><button class="pillb" data-a="bk-import">Відновити з файлу</button></div></section>`;
   }
 };
 
@@ -505,6 +508,10 @@ function act(a, el) {
     case 's-per': SP = el.dataset.v; break;
     case 'bk-make': makeCode().then(c => { BK = c; drawPage(); }).catch(() => toast('Не вдалося створити код')); return;
     case 'bk-copy': navigator.clipboard.writeText(BK).then(() => toast('Код скопійовано'), () => toast('Не вдалося скопіювати — виділи код вручну')); return;
+    case 'ph-add': pickPhoto(el.dataset.k); return;
+    case 'ph-view': Viewer.open(el.dataset.k); return;
+    case 'ph-collage': collageSheet(PM.y, PM.m); return;
+    case 'pm-prev': case 'pm-next': { const d = new Date(PM.y, PM.m + (a === 'pm-next' ? 1 : -1), 1); if (d > new Date()) return; PM.y = d.getFullYear(); PM.m = d.getMonth(); break; }
     case 'code-share': shareCode(); return;
     case 'au-make': Auto.make().then(() => { toast('Автокопію оновлено'); drawPage(); }, () => toast('Не вдалося створити копію')); return;
     case 'au-restore': confirmBox('Відновити з автокопії?', 'Дані щоденника буде замінено даними з копії. Новіші нотатки залишаться.', 'Відновити', false).then(y => { if (y) Auto.restore().catch(() => toast('Не вдалося відновити')); }); return;
@@ -536,9 +543,11 @@ document.addEventListener('submit', e => { const f = e.target.closest('form[data
 document.addEventListener('input', e => {
   const t = e.target;
   if (t.dataset.g !== undefined) { const k = dkey(), a = Array.isArray(L.grat[k]) ? L.grat[k] : ['', '', '']; a[+t.dataset.g] = t.value.slice(0, 120); L.grat[k] = a; saveL(); }
+  if (t.dataset.cap !== undefined) capInput(t);
 });
 document.addEventListener('change', e => {
   const t = e.target;
+  if (t.dataset.cap !== undefined) capFlush();
   if (t.dataset.c === 'len') { L.cycle.len = Math.max(18, Math.min(45, Math.round(+t.value) || 28)); saveL(); drawPage(); }
   if (t.dataset.c === 'period') { L.cycle.period = Math.max(1, Math.min(10, Math.round(+t.value) || 5)); saveL(); drawPage(); }
 });
@@ -560,6 +569,222 @@ async function warmFonts() {
   } catch (e) { }
 }
 setTimeout(warmFonts, 4000);
+
+/* ================= photo of the day ================= */
+// Фото зберігаються в окремій базі: мініатюра для календаря і стиснене повне фото для перегляду.
+I.cam = '<path d="M4 8.5h3.2L9 6h6l1.8 2.5H20v10.5H4z"/><circle cx="12" cy="13.5" r="3.6"/>';
+const PH = new Map(), PHURL = {}, PHload = new Set();
+const PM = { y: new Date().getFullYear(), m: new Date().getMonth() };
+const DATAIMG = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
+const PHDB = {
+  db: null,
+  open() { return this.db ? Promise.resolve(this.db) : new Promise((res, rej) => { const r = indexedDB.open('notatky-photos', 1); r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('meta', { keyPath: 'd' }); d.createObjectStore('full', { keyPath: 'd' }); }; r.onsuccess = () => res(this.db = r.result); r.onerror = () => rej(r.error); }); },
+  async tx(stores, mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction(stores, mode); let out; const r = fn(t); if (r) r.onsuccess = () => { out = r.result; }; t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }); },
+  full(k) { return this.tx('full', 'readonly', t => t.objectStore('full').get(k)).then(r => (r && r.buf ? new Blob([r.buf], { type: 'image/jpeg' }) : null)); }
+};
+function photoCount() { return PH.size; }
+const phCount = pre => { let n = 0; for (const k of PH.keys()) if (k.startsWith(pre)) n++; return n; };
+function dropURL(k) { if (PHURL[k]) URL.revokeObjectURL(PHURL[k]); delete PHURL[k]; PHload.delete(k); }
+function phSrc(k) {
+  if (PHURL[k]) return PHURL[k];
+  if (!PHload.has(k)) {
+    PHload.add(k);
+    PHDB.full(k).then(b => { if (b && PH.has(k)) { PHURL[k] = URL.createObjectURL(b); if (TAB === 'today' && !$('#app :focus')) drawToday(); } }).catch(() => { });
+  }
+  return PH.get(k).thumb;
+}
+
+/* стиснення: повне фото до 1600 px, мініатюра 300×300 */
+function loadImage(blob) { return new Promise((res, rej) => { const u = URL.createObjectURL(blob), im = new Image(); im.onload = () => { URL.revokeObjectURL(u); res(im); }; im.onerror = () => { URL.revokeObjectURL(u); rej(new Error('image')); }; im.src = u; }); }
+const canvasBlob = (c, q) => new Promise((res, rej) => c.toBlob(b => (b ? res(b) : rej(new Error('blob'))), 'image/jpeg', q));
+async function prepPhoto(file) {
+  const im = await loadImage(file), W = im.naturalWidth, H = im.naturalHeight;
+  if (!W || !H) throw new Error('image');
+  const k = Math.min(1, 1600 / Math.max(W, H)), c = document.createElement('canvas');
+  c.width = Math.round(W * k); c.height = Math.round(H * k);
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+  const full = await canvasBlob(c, 0.82);
+  const s = Math.min(W, H), t = document.createElement('canvas'); t.width = t.height = 300;
+  const y = t.getContext('2d'); y.fillStyle = '#fff'; y.fillRect(0, 0, 300, 300); y.drawImage(im, (W - s) / 2, (H - s) / 2, s, s, 0, 0, 300, 300);
+  const thumb = t.toDataURL('image/jpeg', 0.75);
+  c.width = c.height = t.width = t.height = 0;
+  return { full, thumb };
+}
+async function putPhoto(meta, buf) {
+  await PHDB.tx(['meta', 'full'], 'readwrite', t => { t.objectStore('meta').put(meta); t.objectStore('full').put({ d: meta.d, buf }); });
+  PH.set(meta.d, meta); dropURL(meta.d);
+}
+async function addPhoto(k, file) {
+  try {
+    const { full, thumb } = await prepPhoto(file), old = PH.get(k);
+    await putPhoto({ d: k, thumb, cap: old ? old.cap : '', at: Date.now() }, await full.arrayBuffer());
+    toast(old ? 'Фото замінено' : 'Фото дня збережено 📸');
+    lifeRefresh(); Viewer.refresh();
+  } catch (e) { toast(e && e.name === 'QuotaExceededError' ? 'Бракує місця для фото' : 'Не вдалося додати це фото'); }
+}
+async function delPhoto(k) {
+  await PHDB.tx(['meta', 'full'], 'readwrite', t => { t.objectStore('meta').delete(k); t.objectStore('full').delete(k); });
+  PH.delete(k); dropURL(k);
+}
+const phInput = document.createElement('input');
+phInput.type = 'file'; phInput.accept = 'image/*'; phInput.hidden = true; document.body.append(phInput);
+let phTarget = '';
+phInput.addEventListener('change', () => { const f = phInput.files && phInput.files[0]; phInput.value = ''; if (f && isDate(phTarget)) addPhoto(phTarget, f); });
+function pickPhoto(k) { if (!isDate(k) || k > dkey()) return; phTarget = k; phInput.click(); }
+
+/* підпис до фото */
+let capT = 0, capP = null;
+function capFlush() { clearTimeout(capT); if (capP) { const p = capP; capP = null; PHDB.tx('meta', 'readwrite', t => t.objectStore('meta').put(p)).catch(() => { }); } }
+function capInput(t) { const p = PH.get(t.dataset.cap); if (!p) return; p.cap = t.value.slice(0, 120); capP = p; clearTimeout(capT); capT = setTimeout(capFlush, 400); }
+document.addEventListener('visibilitychange', () => { if (document.hidden) capFlush(); });
+addEventListener('pagehide', capFlush);
+document.addEventListener('keydown', e => { const t = e.target; if (e.key === 'Enter' && t && t.dataset && t.dataset.cap !== undefined) t.blur(); });
+
+/* картка на вкладці «Сьогодні» */
+function photoCard(k) {
+  const p = PH.get(k);
+  return `<section class="box" data-key="photo">${head('📸', 'Фото дня')}${p
+    ? `<button class="phimg" data-key="ph-has" data-a="ph-view" data-k="${k}" aria-label="Відкрити фото дня"><img src="${phSrc(k)}" alt="Фото дня"></button><div class="phrow" data-key="ph-row"><input class="inp" data-cap="${k}" value="${esc(p.cap || '')}" placeholder="Підпис до фото…" maxlength="120" autocomplete="off" enterkeyhint="done"><button data-a="ph-add" data-k="${k}" aria-label="Замінити фото">${ico('cam')}</button></div>`
+    : `<button class="phadd" data-key="ph-none" data-a="ph-add" data-k="${k}">${ico('cam')}<b>Додати фото дня</b><span>Момент, який хочеться запамʼятати</span></button>`}</section>`;
+}
+
+/* сторінка «Фото дня»: календар місяця з мініатюрами */
+function photosPage() {
+  const t = dkey(), pre = `${PM.y}-${pad(PM.m + 1)}`, n = phCount(pre);
+  const off = (new Date(PM.y, PM.m, 1).getDay() + 6) % 7, days = new Date(PM.y, PM.m + 1, 0).getDate();
+  const cells = '<div class="x"></div>'.repeat(off) + Array.from({ length: days }, (_, i) => {
+    const k = `${pre}-${pad(i + 1)}`, p = PH.get(k), now = k === t ? ' now' : '';
+    if (p) return `<button class="has${now}" data-key="c${k}" data-a="ph-view" data-k="${k}" aria-label="Фото за ${i + 1} число"><img src="${p.thumb}" alt=""><span>${i + 1}</span></button>`;
+    if (k <= t) return `<button class="add${now}" data-key="c${k}" data-a="ph-add" data-k="${k}" aria-label="Додати фото за ${i + 1} число">${i + 1}</button>`;
+    return `<div class="fut" data-key="c${k}">${i + 1}</div>`;
+  }).join('');
+  const isNow = PM.y === new Date().getFullYear() && PM.m === new Date().getMonth();
+  return `<p class="lead">Одне фото на день — і в кінці місяця готовий колаж. Торкнись порожнього дня, щоб додати фото, або мініатюри, щоб її відкрити.</p><section class="box"><div class="c-head"><i class="c-ico">📸</i><h2>${monthName(PM.y, PM.m)}</h2><div class="calnav"><button class="t-x" data-a="pm-prev" aria-label="Попередній місяць">${ico('back')}</button>${isNow ? '' : `<button class="t-x" data-a="pm-next" aria-label="Наступний місяць">${ico('right')}</button>`}</div></div><div class="calh">${WDH.map(x => `<span>${x}</span>`).join('')}</div><div class="phgrid">${cells}</div><p class="none" data-key="phn" style="margin-top:12px">${n ? `${n} ${pl(n, ['день', 'дні', 'днів'])} у фото цього місяця` : 'Цього місяця ще немає фото.'}</p>${n ? `<button class="main-btn" data-key="phc" data-a="ph-collage">Створити колаж місяця</button>` : ''}</section>`;
+}
+
+/* перегляд фото на весь екран */
+function sharePhoto(k, blob) { if (!blob) { toast('Фото ще завантажується'); return; } saveFile(new File([blob], `foto-${k}.jpg`, { type: 'image/jpeg' })); }
+const Viewer = {
+  el: null, k: '', url: '', blob: null,
+  keys() { return [...PH.keys()].sort(); },
+  build() {
+    const el = this.el = document.createElement('div'); el.id = 'phv'; el.hidden = true;
+    el.innerHTML = `<div class="phv-top"><button data-v="close" aria-label="Закрити">${ico('x')}</button><b></b></div><div class="phv-img"><img alt="Фото дня"><button class="phv-nav prev" data-v="prev" aria-label="Попереднє фото">${ico('back')}</button><button class="phv-nav next" data-v="next" aria-label="Наступне фото">${ico('right')}</button></div><p class="phv-cap"></p><div class="phv-bot"><button data-v="share">${ico('share')}Поділитися</button><button data-v="replace">${ico('cam')}Замінити</button><button data-v="del" class="del" aria-label="Видалити фото">${ico('trash')}</button></div>`;
+    document.body.append(el);
+    el.addEventListener('click', e => { const b = e.target.closest('[data-v]'); if (b) this.act(b.dataset.v); });
+    let sx = 0; const box = $('.phv-img', el);
+    box.addEventListener('touchstart', e => { sx = e.touches[0].clientX; }, { passive: true });
+    box.addEventListener('touchend', e => { const dx = e.changedTouches[0].clientX - sx; if (Math.abs(dx) > 50) this.act(dx < 0 ? 'next' : 'prev'); }, { passive: true });
+  },
+  open(k) { if (!PH.has(k)) return; if (!this.el) this.build(); this.k = k; this.el.hidden = false; this.load(); },
+  async load() {
+    const k = this.k, p = PH.get(k); if (!p) { this.close(); return; }
+    const img = $('img', this.el), l = this.keys(), i = l.indexOf(k);
+    if (this.url) { URL.revokeObjectURL(this.url); this.url = ''; }
+    this.blob = null; img.src = p.thumb;
+    $('b', this.el).textContent = fD(k, { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+    $('.phv-cap', this.el).textContent = p.cap || '';
+    $('.prev', this.el).hidden = i <= 0; $('.next', this.el).hidden = i >= l.length - 1;
+    const b = await PHDB.full(k).catch(() => null);
+    if (this.k !== k || !b || this.el.hidden) return;
+    this.blob = b; this.url = URL.createObjectURL(b); img.src = this.url;
+  },
+  act(v) {
+    const l = this.keys(), i = l.indexOf(this.k);
+    if (v === 'close') this.close();
+    else if (v === 'prev' && i > 0) { this.k = l[i - 1]; this.load(); }
+    else if (v === 'next' && i >= 0 && i < l.length - 1) { this.k = l[i + 1]; this.load(); }
+    else if (v === 'replace') pickPhoto(this.k);
+    else if (v === 'share') sharePhoto(this.k, this.blob);
+    else if (v === 'del') {
+      const k = this.k;
+      confirmBox('Видалити фото?', 'Фото за цей день зникне назавжди.', 'Видалити').then(async y => {
+        if (!y) return;
+        const nx = l[i + 1] || l[i - 1];
+        try { await delPhoto(k); toast('Фото видалено'); } catch (e) { toast('Не вдалося видалити'); return; }
+        if (nx && PH.has(nx)) { this.k = nx; this.load(); lifeRefresh(); } else this.close();
+      });
+    }
+  },
+  close() { if (!this.el || this.el.hidden) return; this.el.hidden = true; if (this.url) { URL.revokeObjectURL(this.url); this.url = ''; } this.blob = null; lifeRefresh(); },
+  refresh() { if (this.el && !this.el.hidden) this.load(); }
+};
+
+/* колаж місяця */
+const rr = (x, a, b, w, h, r) => { x.beginPath(); x.moveTo(a + r, b); x.arcTo(a + w, b, a + w, b + h, r); x.arcTo(a + w, b + h, a, b + h, r); x.arcTo(a, b + h, a, b, r); x.arcTo(a, b, a + w, b, r); x.closePath(); };
+async function makeCollage(y, m) {
+  const pre = `${y}-${pad(m + 1)}`, ks = [...PH.keys()].filter(k => k.startsWith(pre)).sort(), n = ks.length;
+  if (!n) return null;
+  const cols = n === 1 ? 1 : n <= 4 ? 2 : n <= 9 ? 3 : 4, W = 1080, P = 56, G = 18;
+  const cell = Math.floor((W - 2 * P - (cols - 1) * G) / cols), rows = Math.ceil(n / cols), HEAD = 210, FOOT = 110, H = HEAD + rows * cell + (rows - 1) * G + FOOT;
+  const cs = getComputedStyle(document.documentElement), v = (name, d) => cs.getPropertyValue(name).trim() || d;
+  const acc = v('--acc', '#D4107A'), bg = v('--bg', '#FFE1EF'), txt = v('--text', '#4A0A2E'), glam = document.documentElement.dataset.style !== 'classic';
+  try { await Promise.all([document.fonts.load('84px Pacifico'), document.fonts.load('800 30px Nunito')]); } catch (e) { }
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const x = c.getContext('2d');
+  x.fillStyle = bg; x.fillRect(0, 0, W, H);
+  if (glam) { x.fillStyle = 'rgba(212,16,122,.10)'; for (let yy = 14; yy < H; yy += 34) for (let xx = 14; xx < W; xx += 34) { x.beginPath(); x.arc(xx, yy, 3.5, 0, 7); x.fill(); } }
+  x.textAlign = 'center'; x.fillStyle = acc;
+  x.font = glam ? '84px Pacifico, cursive' : '700 70px Georgia, serif';
+  x.fillText(monthName(y, m).replace(/\s*р\.?$/, ''), W / 2, 140);
+  for (let i = 0; i < n; i++) {
+    const k = ks[i], cx = P + (i % cols) * (cell + G), cy = HEAD + Math.floor(i / cols) * (cell + G);
+    let im = null;
+    try { const b = await PHDB.full(k); im = await loadImage(b || await (await fetch(PH.get(k).thumb)).blob()); } catch (e) { }
+    x.save(); x.shadowColor = 'rgba(0,0,0,.18)'; x.shadowBlur = 18; x.shadowOffsetY = 6; rr(x, cx, cy, cell, cell, 26); x.fillStyle = '#fff'; x.fill(); x.restore();
+    x.save(); rr(x, cx, cy, cell, cell, 26); x.clip();
+    if (im) { const s = Math.min(im.naturalWidth, im.naturalHeight); x.drawImage(im, (im.naturalWidth - s) / 2, (im.naturalHeight - s) / 2, s, s, cx, cy, cell, cell); }
+    x.restore();
+    const lab = String(dparse(k).getDate()), fs = Math.round(Math.max(22, cell * 0.1));
+    x.font = `800 ${fs}px Nunito, system-ui, sans-serif`;
+    const bw = x.measureText(lab).width + fs * 0.9, bh = fs * 1.5, bx = cx + 14, by = cy + cell - bh - 14;
+    x.fillStyle = 'rgba(255,255,255,.92)'; rr(x, bx, by, bw, bh, bh / 2); x.fill();
+    x.fillStyle = acc; x.fillText(lab, bx + bw / 2, by + bh * 0.7);
+  }
+  x.fillStyle = txt; x.globalAlpha = 0.75; x.font = '700 30px Nunito, system-ui, sans-serif';
+  x.fillText(`${n} ${pl(n, ['день', 'дні', 'днів'])} у фото`, W / 2, H - 46); x.globalAlpha = 1;
+  const blob = await canvasBlob(c, 0.9); c.width = c.height = 0;
+  return blob;
+}
+async function collageSheet(y, m) {
+  toast('Створюю колаж…');
+  let blob = null;
+  try { blob = await makeCollage(y, m); } catch (e) { }
+  if (!blob) { toast('Не вдалося створити колаж'); return; }
+  const url = URL.createObjectURL(blob), file = new File([blob], `kolazh-${y}-${pad(m + 1)}.jpg`, { type: 'image/jpeg' });
+  const w = sheet(() => `<h3>Колаж: ${monthName(y, m)}</h3><img class="colprev" src="${url}" alt="Колаж фото за місяць"><div class="btns"><button class="btn" data-c="no">Закрити</button><button class="btn pri" data-c="ok">Зберегти колаж</button></div><p class="note">Відкриється «Поділитися» — вибери «Зберегти зображення».</p>`);
+  w.onclose = () => setTimeout(() => URL.revokeObjectURL(url), 400);
+  w.addEventListener('click', e => { const c = e.target.closest('[data-c]')?.dataset.c; if (c === 'no') w.close(); if (c === 'ok') saveFile(file); });
+}
+
+/* фото дня в резервній копії файлом */
+const blobURL = b => new Promise((res, rej) => { const f = new FileReader(); f.onload = () => res(f.result); f.onerror = () => rej(f.error); f.readAsDataURL(b); });
+async function photoBackupParts() {
+  const out = [];
+  for (const k of [...PH.keys()].sort()) {
+    const p = PH.get(k), b = await PHDB.full(k);
+    if (b) out.push(JSON.stringify({ d: k, cap: p.cap || '', at: p.at || 0, thumb: p.thumb, full: await blobURL(b) }));
+  }
+  return out;
+}
+async function photosImport(arr) {
+  let n = 0;
+  for (const p of arr) {
+    try {
+      if (!p || !isDate(p.d) || typeof p.full !== 'string' || !DATAIMG.test(p.full)) continue;
+      const old = PH.get(p.d); if (old && (old.at || 0) >= (+p.at || 0)) continue;
+      const blob = await (await fetch(p.full)).blob();
+      const thumb = typeof p.thumb === 'string' && DATAIMG.test(p.thumb) ? p.thumb : (await prepPhoto(blob)).thumb;
+      await putPhoto({ d: p.d, thumb, cap: String(p.cap || '').slice(0, 120), at: +p.at || Date.now() }, await blob.arrayBuffer());
+      n++;
+    } catch (e) { }
+  }
+  if (n) lifeRefresh();
+  return n;
+}
+PHDB.tx('meta', 'readonly', t => t.objectStore('meta').getAll())
+  .then(a => { (a || []).forEach(p => { if (p && isDate(p.d) && typeof p.thumb === 'string') PH.set(p.d, p); }); if (PH.size) lifeRefresh(); })
+  .catch(() => { });
 
 /* ================= start ================= */
 if (cfg.waterGoal == null) cfg.waterGoal = 8;
