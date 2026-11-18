@@ -11,7 +11,7 @@ Object.assign(I, {
 });
 
 /* ================= data ================= */
-const LDEF = () => ({ tasks: [], mood: {}, water: {}, habits: [], habitLog: {}, grat: {}, joys: [], capsules: [], dreams: [], goals: [], cycle: { starts: [], len: 28, period: 5 }, visits: {}, seen: {} });
+const LDEF = () => ({ tasks: [], mood: {}, water: {}, habits: [], habitLog: {}, grat: {}, joys: [], capsules: [], dreams: [], goals: [], cycle: { starts: [], len: 28, period: 5 }, recipes: [], shop: [], visits: {}, seen: {} });
 const isDate = k => typeof k === 'string' && /^\d{4}-\d\d-\d\d$/.test(k);
 function normLife(o) {
   const d = LDEF();
@@ -27,6 +27,9 @@ function normLife(o) {
   d.capsules = d.capsules.filter(c => isDate(c.open)).map(c => ({ id: String(c.id || uid()), text: String(c.text || '').slice(0, 4000), created: isDate(c.created) ? c.created : dkey(), open: c.open, opened: !!c.opened }));
   d.dreams = d.dreams.map(x => ({ id: String(x.id || uid()), text: String(x.text || '').slice(0, 120), done: !!x.done, doneAt: isDate(x.doneAt) ? x.doneAt : '' }));
   d.goals = d.goals.map(g => ({ id: String(g.id || uid()), text: String(g.text || '').slice(0, 80), per: g.per === 'month' ? 'month' : 'year', key: String(g.key || ''), target: Math.max(1, Math.min(9999, +g.target || 1)), count: Math.max(0, +g.count || 0) }));
+  const rn = (v, b) => { const n = Math.round(+v); return n > 0 ? Math.min(b, n) : 0; };
+  d.recipes = d.recipes.map(r => ({ id: String(r.id || uid()).slice(0, 40), name: String(r.name || '').slice(0, 80), cat: ['breakfast', 'lunch', 'dinner', 'dessert', 'snack', 'drink', 'other'].includes(r.cat) ? r.cat : 'other', time: rn(r.time, 1440), serv: rn(r.serv, 50), ing: String(r.ing || '').slice(0, 4000), steps: String(r.steps || '').slice(0, 6000), note: String(r.note || '').slice(0, 2000), fav: !!r.fav, cooked: rn(r.cooked, 1e6), last: isDate(r.last) ? r.last : '', at: +r.at || 0 })).filter(r => r.name);
+  d.shop = d.shop.map(x => ({ id: String(x.id || uid()), text: String(x.text || '').slice(0, 120), done: !!x.done, from: String(x.from || '').slice(0, 80) })).filter(x => x.text);
   d.cycle.starts = Array.isArray(d.cycle.starts) ? d.cycle.starts.filter(isDate) : [];
   for (const k in d.habitLog) if (!Array.isArray(d.habitLog[k])) delete d.habitLog[k];
   for (const k in d.grat) if (!Array.isArray(d.grat[k])) delete d.grat[k];
@@ -221,22 +224,22 @@ function drawStats() {
 
 /* ================= more ================= */
 function drawMore() {
-  const items = [['photos', '📸', 'Фото дня', `${PH.size} фото`], ['habits', '🌱', 'Звички', `${L.habits.length} ${pl(L.habits.length, ['звичка', 'звички', 'звичок'])}`], ['goals', '🎯', 'Цілі', 'На рік і місяць'], ['joy', '🫙', 'Банка радості', `${L.joys.length} ${pl(L.joys.length, ['момент', 'моменти', 'моментів'])}`], ['capsule', '💌', 'Капсула часу', 'Лист собі в майбутнє'], ['dreams', '✨', 'Мрії', `${L.dreams.filter(d => d.done).length} з ${L.dreams.length} здійснилось`], ['cycle', '🌸', 'Цикл', 'Календар і прогноз'], ['summary', '📊', 'Підсумки', 'Місяць і рік'], ['backup', '☁️', 'Резервна копія', 'Зберегти й відновити'], ['settings', '⚙️', 'Налаштування', 'Імʼя, вода, вигляд']];
+  const items = [['photos', '📸', 'Фото дня', `${PH.size} фото`], ['recipes', '🍰', 'Рецепти', `${L.recipes.length} ${pl(L.recipes.length, ['рецепт', 'рецепти', 'рецептів'])}`], ['habits', '🌱', 'Звички', `${L.habits.length} ${pl(L.habits.length, ['звичка', 'звички', 'звичок'])}`], ['goals', '🎯', 'Цілі', 'На рік і місяць'], ['joy', '🫙', 'Банка радості', `${L.joys.length} ${pl(L.joys.length, ['момент', 'моменти', 'моментів'])}`], ['capsule', '💌', 'Капсула часу', 'Лист собі в майбутнє'], ['dreams', '✨', 'Мрії', `${L.dreams.filter(d => d.done).length} з ${L.dreams.length} здійснилось`], ['cycle', '🌸', 'Цикл', 'Календар і прогноз'], ['summary', '📊', 'Підсумки', 'Місяць і рік'], ['backup', '☁️', 'Резервна копія', 'Зберегти й відновити'], ['settings', '⚙️', 'Налаштування', 'Імʼя, вода, вигляд']];
   morph($('#pgMore'), `<header class="p-head"><h1>Ще</h1></header><div class="more">${items.map(([p, e, n, s]) => `<button data-a="${p === 'settings' ? 'settings' : 'page'}" data-p="${p}"><i>${e}</i><b>${n}</b><span>${s}</span></button>`).join('')}</div>`);
 }
 
 /* ================= pages ================= */
-const PT = { photos: 'Фото дня', habits: 'Звички', goals: 'Цілі', joy: 'Банка радості', capsule: 'Капсула часу', dreams: 'Мрії', cycle: 'Цикл', summary: 'Підсумки', backup: 'Резервна копія' };
+const PT = { photos: 'Фото дня', recipes: () => rtitle(), habits: 'Звички', goals: 'Цілі', joy: 'Банка радості', capsule: 'Капсула часу', dreams: 'Мрії', cycle: 'Цикл', summary: 'Підсумки', backup: 'Резервна копія' };
 let hemo = 0, GP = 'year', CP = 3, SP = 'month', BK = '';
 const CM = { y: new Date().getFullYear(), m: new Date().getMonth() };
 const gkey = () => GP === 'year' ? String(new Date().getFullYear()) : dkey().slice(0, 7);
 const segs = (a, cur, list) => `<div class="seg" style="margin-bottom:14px">${list.map(([v, l]) => `<button data-a="${a}" data-v="${v}" class="${String(cur) === String(v) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-function openPage(p) { PAGE = p; BK = ''; $('#page').innerHTML = ''; drawPage(); const el = $('#page'); el.scrollTop = 0; el.classList.add('in'); history.pushState({ pg: 1 }, ''); }
+function openPage(p) { PAGE = p; BK = ''; if (p === 'recipes') { RS.stack = []; RS.draft = null; } $('#page').innerHTML = ''; drawPage(); const el = $('#page'); el.scrollTop = 0; el.classList.add('in'); history.pushState({ pg: 1 }, ''); }
 function closePage() { if (!PAGE) return; PAGE = null; $('#page').classList.remove('in'); draw(); }
-addEventListener('popstate', () => { if (PAGE && !cur) closePage(); });
+addEventListener('popstate', () => { if (cur) return; if (PAGE === 'recipes' && RS.stack.length) { rpop(); return; } if (PAGE) closePage(); });
 function drawPage() {
   if (!PAGE) return;
-  morph($('#page'), `<div class="pbar"><button class="ib" data-a="back" aria-label="Назад">${ico('back')}</button><h2>${PT[PAGE]}</h2></div><div class="pg">${PAGES[PAGE]()}</div>`);
+  morph($('#page'), `<div class="pbar"><button class="ib" data-a="back" aria-label="Назад">${ico('back')}</button><h2>${typeof PT[PAGE] === 'function' ? PT[PAGE]() : PT[PAGE]}</h2></div><div class="pg">${PAGES[PAGE]()}</div>`);
 }
 function cycleInfo() {
   const s = [...new Set(L.cycle.starts)].sort(), t = dkey();
@@ -262,6 +265,7 @@ function cycleMark(k, c) {
 }
 const PAGES = {
   photos() { return photosPage(); },
+  recipes() { return recipesPage(); },
   habits() {
     const t = dkey();
     return `<p class="lead">Маленькі щоденні кроки. Відмічай їх одним дотиком на вкладці «Сьогодні».</p><section class="box" style="padding-top:6px"><form class="quick" data-key="form" data-f="habit"><button type="button" class="emo" data-a="h-emoji" aria-label="Змінити значок">${HEMO[hemo]}</button><input name="t" placeholder="Нова звичка, напр. «Читати»" maxlength="40" autocomplete="off"><button aria-label="Додати">${ico('plus')}</button></form></section>` + L.habits.map(x => {
@@ -304,7 +308,7 @@ const PAGES = {
     return segs('s-per', SP, [['month', 'Місяць'], ['year', 'Рік']]) + `<section class="box hero" style="display:block"><p class="t-date" style="opacity:.9">Підсумки</p><h1 style="color:#fff;text-shadow:none">${title}</h1><p style="margin:10px 0 0;font-size:15px;position:relative;z-index:1">${s.total ? `Виконано ${s.done} із ${s.total} справ — це ${s.pct}%.` : 'Справ за цей період ще не було.'} ${s.mood ? `Найчастіший настрій: ${s.mood[1]} ${s.mood[2].toLowerCase()}.` : ''}</p></section><section class="box">${head('📊', 'У цифрах')}<div class="tiles">${tile(s.done, 'справ зроблено')}${tile(s.pct + '%', 'виконання')}${tile(s.water, 'склянок води')}${tile(s.habits, 'відміток звичок')}${tile(s.grat, 'днів вдячності')}${tile(s.joys, 'моментів радості')}${tile(s.dreams, 'мрій здійснилось')}${tile(s.photos, 'днів у фото')}${tile(bestStreak(), 'рекорд днів поспіль')}</div></section>`;
   },
   backup() {
-    return `<p class="lead">Усі дані зберігаються тільки на цьому телефоні. Резервна копія допоможе перенести їх на інший пристрій або відновити.</p><section class="box">${head('🔄', 'Автоматична копія', 'раз на день')}<p class="none" data-key="none">${Auto.info ? `Остання копія: ${new Date(Auto.info.at).toLocaleString('uk-UA', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, нотаток у ній: ${Auto.info.notes}.` : 'Першу копію буде створено, щойно зʼявляться дані.'} Створюється сама, нова копія замінює стару.</p><div class="btnrow"><button class="pillb pri" data-a="au-make">Оновити зараз</button>${Auto.info ? '<button class="pillb" data-a="au-restore">Відновити з неї</button>' : ''}</div><p class="hintp" data-key="hint">Копія лежить у памʼяті застосунку на цьому телефоні. Вона врятує після помилки чи невдалого відновлення, але зникне разом із застосунком, якщо його видалити або очистити дані сайтів у Safari. Для такого випадку збережи код або файл нижче.</p></section><section class="box">${head('🔑', 'Копія кодом')}<p class="none" data-key="none">Код містить справи, звички, настрій, цілі, мрії, цикл і тексти нотаток (без фото).</p><button class="main-btn" data-a="code-share">Зберегти код у Нотатки</button><p class="hintp" data-key="hint">Відкриється меню «Поділитися» — вибери «Нотатки» і натисни «Зберегти».${L.seen.codeAt ? ` Востаннє зберігала ${new Date(+L.seen.codeAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}.` : ''}</p><button class="ghost" data-a="bk-make">Показати код тут</button>${BK ? `<textarea class="area code" readonly style="margin-top:12px">${esc(BK)}</textarea><button class="ghost" data-a="bk-copy">Скопіювати код</button><p class="hintp" data-key="hint">Збережи код у надійному місці, наприклад надішли собі в месенджері.</p>` : ''}</section><section class="box">${head('↩️', 'Відновити з коду')}<form data-f="restore"><textarea class="area code" name="t" placeholder="Встав сюди код"></textarea><button class="main-btn">Відновити</button></form><p class="hintp" data-key="hint">Дані щоденника буде замінено даними з коду.</p></section><section class="box">${head('📁', 'Копія файлом')}<p class="none" data-key="none">Повна копія: усі дані, фото в нотатках і фото дня.</p><div class="btnrow"><button class="pillb" data-a="bk-file">Зберегти файл</button><button class="pillb" data-a="bk-import">Відновити з файлу</button></div></section>`;
+    return `<p class="lead">Усі дані зберігаються тільки на цьому телефоні. Резервна копія допоможе перенести їх на інший пристрій або відновити.</p><section class="box">${head('🔄', 'Автоматична копія', 'раз на день')}<p class="none" data-key="none">${Auto.info ? `Остання копія: ${new Date(Auto.info.at).toLocaleString('uk-UA', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}, нотаток у ній: ${Auto.info.notes}.` : 'Першу копію буде створено, щойно зʼявляться дані.'} Створюється сама, нова копія замінює стару.</p><div class="btnrow"><button class="pillb pri" data-a="au-make">Оновити зараз</button>${Auto.info ? '<button class="pillb" data-a="au-restore">Відновити з неї</button>' : ''}</div><p class="hintp" data-key="hint">Копія лежить у памʼяті застосунку на цьому телефоні. Вона врятує після помилки чи невдалого відновлення, але зникне разом із застосунком, якщо його видалити або очистити дані сайтів у Safari. Для такого випадку збережи код або файл нижче.</p></section><section class="box">${head('🔑', 'Копія кодом')}<p class="none" data-key="none">Код містить справи, звички, настрій, цілі, мрії, цикл, рецепти й тексти нотаток (без фото).</p><button class="main-btn" data-a="code-share">Зберегти код у Нотатки</button><p class="hintp" data-key="hint">Відкриється меню «Поділитися» — вибери «Нотатки» і натисни «Зберегти».${L.seen.codeAt ? ` Востаннє зберігала ${new Date(+L.seen.codeAt).toLocaleDateString('uk-UA', { day: 'numeric', month: 'long' })}.` : ''}</p><button class="ghost" data-a="bk-make">Показати код тут</button>${BK ? `<textarea class="area code" readonly style="margin-top:12px">${esc(BK)}</textarea><button class="ghost" data-a="bk-copy">Скопіювати код</button><p class="hintp" data-key="hint">Збережи код у надійному місці, наприклад надішли собі в месенджері.</p>` : ''}</section><section class="box">${head('↩️', 'Відновити з коду')}<form data-f="restore"><textarea class="area code" name="t" placeholder="Встав сюди код"></textarea><button class="main-btn">Відновити</button></form><p class="hintp" data-key="hint">Дані щоденника буде замінено даними з коду.</p></section><section class="box">${head('📁', 'Копія файлом')}<p class="none" data-key="none">Повна копія: усі дані, фото в нотатках, фото дня і фото рецептів.</p><div class="btnrow"><button class="pillb" data-a="bk-file">Зберегти файл</button><button class="pillb" data-a="bk-import">Відновити з файлу</button></div></section>`;
   }
 };
 
@@ -358,7 +362,7 @@ function shareCode() {
 
 /* ================= automatic backup ================= */
 // Одна копія в окремій базі застосунку: створюється раз на день, нова замінює стару.
-const lifeHas = l => !!(l && ((l.tasks || []).length || (l.habits || []).length || (l.joys || []).length || (l.dreams || []).length || (l.goals || []).length || (l.capsules || []).length || Object.keys(l.mood || {}).length || ((l.cycle || {}).starts || []).length));
+const lifeHas = l => !!(l && ((l.tasks || []).length || (l.habits || []).length || (l.joys || []).length || (l.dreams || []).length || (l.goals || []).length || (l.capsules || []).length || Object.keys(l.mood || {}).length || ((l.cycle || {}).starts || []).length || (l.recipes || []).length));
 const Auto = {
   db: null, info: null,
   open() { return this.db ? Promise.resolve(this.db) : new Promise((res, rej) => { const r = indexedDB.open('notatky-backup', 1); r.onupgradeneeded = () => r.result.createObjectStore('snap', { keyPath: 'id' }); r.onsuccess = () => res(this.db = r.result); r.onerror = () => rej(r.error); }); },
@@ -469,6 +473,7 @@ function readCapsule(id) {
 function act(a, el) {
   const id = el.dataset.id || el.closest('[data-id]')?.dataset.id, k = dkey();
   const find = arr => arr.find(x => x.id === id), drop = key => { L[key] = L[key].filter(x => x.id !== id); };
+  if ((a[0] === 'r' || a[0] === 's') && a[1] === '-' && recAct(a, el)) return;
   switch (a) {
     case 'tab': go(el.dataset.tab); return;
     case 'settings': openSettings(); return;
@@ -529,6 +534,8 @@ function formAct(f) {
     case 'goal': if (!v) return; L.goals.push({ id: uid(), text: v.slice(0, 80), per: GP, key: gkey(), target: Math.max(1, Math.min(9999, Math.round(+f.elements.n.value) || 1)), count: 0 }); break;
     case 'joy': if (!v) return; L.joys.unshift({ id: uid(), text: v.slice(0, 300), date: dkey() }); toast('Момент у банці 💛'); break;
     case 'capsule': { if (!v) return; const d = new Date(); d.setMonth(d.getMonth() + CP); L.capsules.push({ id: uid(), text: v.slice(0, 4000), created: dkey(), open: dkey(d), opened: false }); toast('Лист запечатано 💌'); break; }
+    case 'recipe': saveRecipe(); return;
+    case 'shop': if (!v) return; L.shop.push({ id: uid(), text: v.slice(0, 120), done: false, from: '' }); break;
     case 'dream': if (!v) return; L.dreams.push({ id: uid(), text: v.slice(0, 120), done: false, doneAt: '' }); break;
     case 'cycle': { const d = f.elements.d.value; if (!isDate(d) || d > dkey()) { toast('Обери дату не пізніше сьогодні'); return; } if (!L.cycle.starts.includes(d)) L.cycle.starts.push(d); toast('Відмічено'); break; }
     case 'restore': if (!v) return; readCode(v).then(async d => { if (!await confirmBox('Відновити з коду?', 'Поточні дані щоденника буде замінено даними з коду. Нотатки додадуться до наявних.', 'Відновити', false)) return; await applyCode(d); render(); toast('Дані відновлено'); }).catch(() => toast('Код не підходить або пошкоджений')); return;
@@ -537,6 +544,7 @@ function formAct(f) {
   if (f.isConnected) f.reset();
   saveL(); lifeRefresh();
   if (f.dataset.f === 'task') { const i = $(`#app>.tab.on form[data-f=task] input`); if (i) i.focus(); }
+  if (f.dataset.f === 'shop') { const i = $('#page form[data-f=shop] input'); if (i) i.focus(); }
 }
 document.addEventListener('click', e => { const el = e.target.closest('[data-a]'); if (el && el.closest('#app>.tab:not(#list),#tabs,#page')) act(el.dataset.a, el); });
 document.addEventListener('submit', e => { const f = e.target.closest('form[data-f]'); if (f) { e.preventDefault(); formAct(f); } });
@@ -578,11 +586,11 @@ const PM = { y: new Date().getFullYear(), m: new Date().getMonth() };
 const DATAIMG = /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+/=]+$/;
 const PHDB = {
   db: null,
-  open() { return this.db ? Promise.resolve(this.db) : new Promise((res, rej) => { const r = indexedDB.open('notatky-photos', 1); r.onupgradeneeded = () => { const d = r.result; d.createObjectStore('meta', { keyPath: 'd' }); d.createObjectStore('full', { keyPath: 'd' }); }; r.onsuccess = () => res(this.db = r.result); r.onerror = () => rej(r.error); }); },
+  open() { return this.db ? Promise.resolve(this.db) : new Promise((res, rej) => { const r = indexedDB.open('notatky-photos', 2); r.onupgradeneeded = () => { const d = r.result, has = n => d.objectStoreNames.contains(n); if (!has('meta')) d.createObjectStore('meta', { keyPath: 'd' }); if (!has('full')) d.createObjectStore('full', { keyPath: 'd' }); if (!has('rec')) d.createObjectStore('rec', { keyPath: 'id' }); }; r.onsuccess = () => res(this.db = r.result); r.onerror = () => rej(r.error); }); },
   async tx(stores, mode, fn) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction(stores, mode); let out; const r = fn(t); if (r) r.onsuccess = () => { out = r.result; }; t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error); }); },
   full(k) { return this.tx('full', 'readonly', t => t.objectStore('full').get(k)).then(r => (r && r.buf ? new Blob([r.buf], { type: 'image/jpeg' }) : null)); }
 };
-function photoCount() { return PH.size; }
+function photoCount() { return PH.size + (typeof RP === 'undefined' ? 0 : [...RP.keys()].filter(id => L.recipes.some(r => r.id === id)).length); }
 const phCount = pre => { let n = 0; for (const k of PH.keys()) if (k.startsWith(pre)) n++; return n; };
 function dropURL(k) { if (PHURL[k]) URL.revokeObjectURL(PHURL[k]); delete PHURL[k]; PHload.delete(k); }
 function phSrc(k) {
@@ -765,12 +773,14 @@ async function photoBackupParts() {
     const p = PH.get(k), b = await PHDB.full(k);
     if (b) out.push(JSON.stringify({ d: k, cap: p.cap || '', at: p.at || 0, thumb: p.thumb, full: await blobURL(b) }));
   }
+  for (const [id, img] of RP) if (L.recipes.some(r => r.id === id)) out.push(JSON.stringify({ r: id, img }));
   return out;
 }
 async function photosImport(arr) {
   let n = 0;
   for (const p of arr) {
     try {
+      if (p && typeof p.r === 'string') { if (typeof p.img === 'string' && DATAIMG.test(p.img)) await recImgPut(p.r.slice(0, 40), p.img); continue; }
       if (!p || !isDate(p.d) || typeof p.full !== 'string' || !DATAIMG.test(p.full)) continue;
       const old = PH.get(p.d); if (old && (old.at || 0) >= (+p.at || 0)) continue;
       const blob = await (await fetch(p.full)).blob();
@@ -784,6 +794,195 @@ async function photosImport(arr) {
 }
 PHDB.tx('meta', 'readonly', t => t.objectStore('meta').getAll())
   .then(a => { (a || []).forEach(p => { if (p && isDate(p.d) && typeof p.thumb === 'string') PH.set(p.d, p); }); if (PH.size) lifeRefresh(); })
+  .catch(() => { });
+
+/* ================= recipes ================= */
+// Книга рецептів: тексти лежать у L.recipes (ідуть і в код), фото — в базі notatky-photos, сховище rec.
+I.heart = '<path d="M12 20s-7.5-4.6-7.5-10.2A4.3 4.3 0 0 1 12 7.3a4.3 4.3 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>';
+I.cart = '<path d="M3.5 4.5h2.3l2.1 10.2h10.3l2-7.2H7"/><circle cx="9.5" cy="19" r="1.4"/><circle cx="17" cy="19" r="1.4"/>';
+const RCAT = { breakfast: ['🥞', 'Сніданок'], lunch: ['🍲', 'Обід'], dinner: ['🍝', 'Вечеря'], dessert: ['🍰', 'Десерт'], snack: ['🥪', 'Перекус'], drink: ['🍹', 'Напій'], other: ['🍽️', 'Інше'] };
+const rcat = k => RCAT[k] || RCAT.other;
+const RP = new Map();
+const RS = { stack: [], q: '', f: 'all', draft: null, serv: 0, chk: new Set(), stp: new Set() };
+const rview = () => RS.stack[RS.stack.length - 1] || { v: 'list' };
+const rfind = () => L.recipes.find(x => x.id === rview().id);
+const lines = s => String(s || '').split('\n').map(x => x.trim()).filter(Boolean);
+const rint = (v, a, b) => { const n = Math.round(+v); return n > 0 ? Math.max(a, Math.min(b, n)) : 0; };
+const rtime = m => m < 60 ? `${m} хв` : `${Math.floor(m / 60)} год${m % 60 ? ` ${m % 60} хв` : ''}`;
+const fmtN = v => { const r = Math.round(v * 100) / 100; return Math.abs(r - Math.round(r)) < 0.01 ? String(Math.round(r)) : String(Math.round(r * 10) / 10 || r).replace('.', ','); };
+// перерахунок першої кількості в рядку: «200 г», «1/2 ч. л.», «1,5 склянки», «½»
+function scaleLine(x, f) {
+  if (f === 1) return x;
+  return x.replace(/(\d+)\s*\/\s*(\d+)|\d+(?:[.,]\d+)?|[½¼¾]/, (m, a, b) => fmtN((a ? +a / +b : m === '½' ? .5 : m === '¼' ? .25 : m === '¾' ? .75 : +m.replace(',', '.')) * f));
+}
+const stepText = x => x.replace(/^\d+[.)]\s*/, '');
+
+/* екран не гасне, поки відкритий рецепт */
+let WL = null;
+async function wake(on) {
+  try {
+    if (on && !WL && 'wakeLock' in navigator && !document.hidden) { WL = await navigator.wakeLock.request('screen'); WL.addEventListener('release', () => { WL = null; }); }
+    else if (!on && WL) { const w = WL; WL = null; await w.release(); }
+  } catch (e) { WL = null; }
+}
+document.addEventListener('visibilitychange', () => { if (!document.hidden && PAGE === 'recipes' && rview().v === 'rec') wake(true); });
+
+/* навігація всередині сторінки (кнопка «Назад» і свайп працюють через історію) */
+function rinit(r) { RS.serv = r ? r.serv : 0; RS.chk = new Set(); RS.stp = new Set(); }
+function rgo(v, id) {
+  RS.stack.push({ v, id });
+  const r = id ? L.recipes.find(x => x.id === id) : null;
+  if (v === 'rec') { rinit(r); wake(true); }
+  if (v === 'edit') RS.draft = r ? { ...r, time: r.time || '', serv: r.serv || '', img: RP.get(r.id) || '' } : { id: '', name: '', cat: RCAT[RS.f] ? RS.f : 'other', time: '', serv: '', ing: '', steps: '', note: '', img: '' };
+  history.pushState({ pg: 1, rs: RS.stack.length }, '');
+  rdraw(true);
+}
+function rpop() {
+  RS.stack.pop();
+  const t = rview();
+  if (t.v === 'rec') rinit(rfind()); else wake(false);
+  if (t.v !== 'edit') RS.draft = null;
+  rdraw(true);
+}
+function rdraw(top) { drawPage(); if (top) $('#page').scrollTop = 0; }
+function rtitle() { const t = rview(); return t.v === 'shop' ? 'Покупки' : t.v === 'edit' ? (t.id ? 'Редагувати' : 'Новий рецепт') : t.v === 'rec' ? 'Рецепт' : 'Рецепти'; }
+
+/* фото рецепта */
+async function prepRecImg(file) {
+  const im = await loadImage(file), W = im.naturalWidth, H = im.naturalHeight;
+  if (!W || !H) throw new Error('image');
+  const k = Math.min(1, 1000 / Math.max(W, H)), c = document.createElement('canvas');
+  c.width = Math.round(W * k); c.height = Math.round(H * k);
+  const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(im, 0, 0, c.width, c.height);
+  const url = c.toDataURL('image/jpeg', 0.78); c.width = c.height = 0;
+  return url;
+}
+async function recImgPut(id, img) { await PHDB.tx('rec', 'readwrite', t => t.objectStore('rec').put({ id, img })); RP.set(id, img); }
+async function recImgDel(id) { await PHDB.tx('rec', 'readwrite', t => t.objectStore('rec').delete(id)); RP.delete(id); }
+const rInput = document.createElement('input');
+rInput.type = 'file'; rInput.accept = 'image/*'; rInput.hidden = true; document.body.append(rInput);
+rInput.addEventListener('change', async () => {
+  const f = rInput.files && rInput.files[0]; rInput.value = '';
+  if (!f || !RS.draft) return;
+  try { RS.draft.img = await prepRecImg(f); drawPage(); } catch (e) { toast('Не вдалося додати це фото'); }
+});
+
+/* збереження з редактора */
+async function saveRecipe() {
+  const d = RS.draft; if (!d) return;
+  const name = String(d.name || '').trim();
+  if (!name) { toast('Напиши назву рецепта'); const i = $('#page [data-rf=name]'); if (i) i.focus(); return; }
+  const isNew = !d.id, id = d.id || uid(), old = L.recipes.find(x => x.id === id);
+  const r = { id, name: name.slice(0, 80), cat: RCAT[d.cat] ? d.cat : 'other', time: rint(d.time, 1, 1440), serv: rint(d.serv, 1, 50), ing: String(d.ing || '').trim().slice(0, 4000), steps: String(d.steps || '').trim().slice(0, 6000), note: String(d.note || '').trim().slice(0, 2000), fav: old ? old.fav : false, cooked: old ? old.cooked : 0, last: old ? old.last : '', at: old ? old.at : Date.now() };
+  if (old) Object.assign(old, r); else L.recipes.unshift(r);
+  saveL();
+  try { if (d.img) { if (RP.get(id) !== d.img) await recImgPut(id, d.img); } else if (RP.has(id)) await recImgDel(id); }
+  catch (e) { toast(e && e.name === 'QuotaExceededError' ? 'Бракує місця для фото' : 'Фото не вдалося зберегти'); }
+  RS.draft = null;
+  if (isNew) { toast('Рецепт збережено 🍰'); RS.stack[RS.stack.length - 1] = { v: 'rec', id }; rinit(r); wake(true); rdraw(true); }
+  else { toast('Зміни збережено'); history.back(); }
+}
+
+function recText(r) {
+  const f = r.serv && RS.serv ? RS.serv / r.serv : 1, ing = lines(r.ing), st = lines(r.steps), o = [`🍰 ${r.name}`];
+  const meta = [r.time ? `⏱ ${rtime(r.time)}` : '', r.serv ? `🍽 ${RS.serv || r.serv} ${pl(RS.serv || r.serv, ['порція', 'порції', 'порцій'])}` : ''].filter(Boolean).join('  ');
+  if (meta) o.push(meta);
+  if (ing.length) o.push('', 'Інгредієнти:', ...ing.map(x => `• ${scaleLine(x, f)}`));
+  if (st.length) o.push('', 'Приготування:', ...st.map((x, i) => `${i + 1}. ${stepText(x)}`));
+  if (r.note) o.push('', `Поради: ${r.note}`);
+  return o.join('\n');
+}
+function shareText(title, text) {
+  if (navigator.share) navigator.share({ title, text }).catch(() => { });
+  else navigator.clipboard.writeText(text).then(() => toast('Скопійовано'), () => toast('Не вдалося скопіювати'));
+}
+
+/* екрани */
+function recipesPage() { const t = rview(); return t.v === 'rec' ? recView() : t.v === 'edit' ? recEdit() : t.v === 'shop' ? shopView() : recList(); }
+function recList() {
+  const all = L.recipes, q = RS.q.trim().toLowerCase(), left = L.shop.filter(s => !s.done).length;
+  let o = `<div class="btnrow rtop" data-key="top"><button class="pillb pri" data-a="r-new">${ico('plus')}Новий рецепт</button><button class="pillb" data-a="r-shop">${ico('cart')}Покупки${left ? ` · ${left}` : ''}</button></div>`;
+  if (!all.length) return o + `<section class="box rempty" data-key="empty"><i>👩‍🍳</i><b>Твоя книга рецептів</b><p>Зберігай улюблені страви з фото, інгредієнтами й кроками. Порції перераховуються самі, а інгредієнти одним дотиком потрапляють у список покупок.</p></section>`;
+  const chips = [['all', 'Усі'], ['fav', '❤️ Улюблені'], ...Object.keys(RCAT).filter(k => RS.f === k || all.some(r => r.cat === k)).map(k => [k, rcat(k).join(' ')])];
+  let a = all.filter(r => RS.f === 'all' || (RS.f === 'fav' ? r.fav : r.cat === RS.f));
+  if (q) a = a.filter(r => `${r.name}\n${r.ing}`.toLowerCase().includes(q));
+  a = [...a].sort((x, y) => (y.fav - x.fav) || (y.at - x.at));
+  o += `<div class="rsearch" data-key="search">${ico('search')}<input class="inp" data-rs value="${esc(RS.q)}" placeholder="Пошук: назва чи інгредієнт" autocomplete="off" enterkeyhint="search"></div><div class="rchips" data-key="chips">${chips.map(([k, l]) => `<button data-a="r-f" data-v="${k}" class="${RS.f === k ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+  o += a.length ? `<div class="rgrid" data-key="grid">${a.map(r => `<button class="rcard" data-id="${esc(r.id)}" data-a="r-open">${RP.has(r.id) ? `<img src="${RP.get(r.id)}" alt="">` : `<i class="remo">${rcat(r.cat)[0]}</i>`}<span class="rc-b"><b>${esc(r.name)}</b><small>${[rcat(r.cat)[1], r.time ? rtime(r.time) : ''].filter(Boolean).join(' · ')}</small></span>${r.fav ? `<em>${ico('heart')}</em>` : ''}</button>`).join('')}</div>` : `<p class="none" data-key="none" style="margin:4px 4px 0">${q ? 'Нічого не знайдено.' : 'Тут поки порожньо.'}</p>`;
+  return o;
+}
+function recView() {
+  const r = rfind(); if (!r) return '<p class="none">Рецепт не знайдено.</p>';
+  const f = r.serv && RS.serv ? RS.serv / r.serv : 1, ing = lines(r.ing), st = lines(r.steps), img = RP.get(r.id);
+  const meta = [rcat(r.cat).join(' '), r.time ? `⏱ ${rtime(r.time)}` : '', r.cooked ? `🍳 готувала ${r.cooked} ${pl(r.cooked, ['раз', 'рази', 'разів'])}` : ''].filter(Boolean);
+  let o = `<div class="rhero${img ? '' : ' e'}" data-key="hero">${img ? `<img src="${img}" alt="">` : `<i>${rcat(r.cat)[0]}</i>`}</div>`;
+  o += `<section class="box" data-key="info"><h1 class="rname">${esc(r.name)}</h1><div class="rmeta">${meta.map(x => `<span>${x}</span>`).join('')}</div><div class="btnrow rbtns"><button class="pillb${r.fav ? ' pri' : ''}" data-a="r-fav">${ico('heart')}${r.fav ? 'Улюблений' : 'В улюблені'}</button><button class="pillb" data-a="r-edit">${ico('edit')}Змінити</button><button class="pillb" data-a="r-share" aria-label="Поділитися">${ico('share')}</button><button class="pillb" data-a="r-del" aria-label="Видалити">${ico('trash')}</button></div></section>`;
+  if (ing.length) o += `<section class="box" data-key="ing">${head('🧺', 'Інгредієнти', `${ing.length}`)}${r.serv ? `<div class="rserv" data-key="serv"><span>Порцій</span><button data-a="r-serv" data-v="-1" aria-label="Менше порцій">−</button><b>${RS.serv}</b><button data-a="r-serv" data-v="1" aria-label="Більше порцій">+</button></div>` : ''}<ul class="tasks" data-key="list">${ing.map((x, i) => `<li class="task${RS.chk.has(i) ? ' done' : ''}" data-key="i${i}" data-a="r-chk" data-i="${i}"><span class="chk">${ico('ok')}</span><div class="t-main"><span>${esc(scaleLine(x, f))}</span></div></li>`).join('')}</ul><button class="ghost" data-key="buy" data-a="r-buy">${ico('cart')} Додати в покупки</button><p class="hintp" data-key="hint">Відміть те, що вже є вдома, — у список покупок піде решта.</p></section>`;
+  if (st.length) o += `<section class="box" data-key="steps">${head('👩‍🍳', 'Приготування', `${RS.stp.size} з ${st.length}`)}<ol class="rsteps" data-key="list">${st.map((x, i) => `<li class="${RS.stp.has(i) ? 'done' : ''}" data-key="s${i}" data-a="r-step" data-i="${i}"><b>${i + 1}</b><p>${esc(stepText(x))}</p></li>`).join('')}</ol><p class="hintp" data-key="hint">Торкнись кроку, коли він готовий.</p></section>`;
+  if (r.note) o += `<section class="box" data-key="note">${head('💡', 'Поради')}<p class="rnote">${esc(r.note)}</p></section>`;
+  if (!ing.length && !st.length && !r.note) o += `<section class="box" data-key="empty"><p class="none">Інгредієнтів і кроків ще немає. Натисни «Змінити», щоб їх дописати.</p></section>`;
+  o += `<button class="main-btn" data-key="cook" data-a="r-cook" style="margin:0 0 6px">Приготувала 🍳</button>${r.last ? `<p class="hintp" data-key="last" style="text-align:center">Востаннє ${fD(r.last, { day: 'numeric', month: 'long', year: 'numeric' })}</p>` : ''}`;
+  return o;
+}
+function recEdit() {
+  const d = RS.draft || {}, e = v => esc(String(v == null ? '' : v));
+  return `<form data-f="recipe" data-key="form" novalidate><button type="button" class="rphoto${d.img ? ' has' : ''}" data-key="photo" data-a="r-photo">${d.img ? `<img src="${d.img}" alt="Фото страви">` : `${ico('cam')}<b>Додати фото страви</b>`}</button>${d.img ? `<button type="button" class="ghost" data-key="nophoto" data-a="r-nophoto" style="margin:-2px 0 14px">Прибрати фото</button>` : ''}`
+    + `<section class="box" data-key="main"><label class="rl">Назва<input class="inp" data-rf="name" name="t" value="${e(d.name)}" maxlength="80" placeholder="Напр. «Сирники як у бабусі»" autocomplete="off"></label><div class="rl">Категорія<div class="rchips wrap">${Object.keys(RCAT).map(k => `<button type="button" data-a="r-cat" data-v="${k}" class="${d.cat === k ? 'on' : ''}">${rcat(k).join(' ')}</button>`).join('')}</div></div><div class="two"><label>Час, хвилин<input class="inp" data-rf="time" type="number" inputmode="numeric" min="0" max="1440" value="${e(d.time)}" placeholder="30"></label><label>Порцій<input class="inp" data-rf="serv" type="number" inputmode="numeric" min="0" max="50" value="${e(d.serv)}" placeholder="2"></label></div></section>`
+    + `<section class="box" data-key="ing">${head('🧺', 'Інгредієнти')}<textarea class="area" data-rf="ing" maxlength="4000" placeholder="Кожен з нового рядка:&#10;500 г сиру&#10;2 яйця&#10;3 ст. л. борошна">${e(d.ing)}</textarea><p class="hintp">Пиши кількість на початку рядка — тоді порції перераховуватимуться самі.</p></section>`
+    + `<section class="box" data-key="steps">${head('👩‍🍳', 'Приготування')}<textarea class="area" data-rf="steps" maxlength="6000" placeholder="Кожен крок з нового рядка">${e(d.steps)}</textarea></section>`
+    + `<section class="box" data-key="note">${head('💡', 'Поради')}<textarea class="area" data-rf="note" maxlength="2000" style="min-height:80px" placeholder="Що варто запамʼятати наступного разу">${e(d.note)}</textarea></section>`
+    + `<button class="main-btn" data-key="save" style="margin:0 0 14px">Зберегти рецепт</button></form>`;
+}
+function shopView() {
+  const a = L.shop, left = a.filter(s => !s.done);
+  return `<section class="box" data-key="shop">${head('🛒', 'Купити', a.length ? `${left.length} з ${a.length}` : '')}${a.length ? `<ul class="tasks" data-key="list">${[...left, ...a.filter(s => s.done)].map(s => `<li class="task${s.done ? ' done' : ''}" data-id="${esc(s.id)}"><button class="chk" data-a="s-toggle" aria-label="Куплено">${ico('ok')}</button><div class="t-main"><span>${esc(s.text)}</span>${s.from ? `<small class="rfrom">${esc(s.from)}</small>` : ''}</div><button class="t-x" data-a="s-del" aria-label="Видалити">${ico('x')}</button></li>`).join('')}</ul>` : '<p class="none" data-key="none">Список порожній. Додай щось тут або відкрий рецепт і натисни «Додати в покупки».</p>'}<form class="quick" data-key="form" data-f="shop"><input name="t" placeholder="Що купити?" maxlength="120" autocomplete="off" enterkeyhint="done"><button aria-label="Додати">${ico('plus')}</button></form></section>${a.length ? `<div class="btnrow rtop" data-key="acts">${left.length ? `<button class="pillb pri" data-a="s-share">${ico('share')}Надіслати список</button>` : ''}${a.length > left.length ? `<button class="pillb" data-a="s-clear">Прибрати куплене</button>` : ''}</div>` : ''}`;
+}
+
+/* дії сторінки рецептів; повертає true, якщо дію оброблено */
+function recAct(a, el) {
+  const r = rfind(), k = dkey();
+  switch (a) {
+    case 'r-new': rgo('edit'); return true;
+    case 'r-shop': rgo('shop'); return true;
+    case 'r-open': rgo('rec', el.dataset.id); return true;
+    case 'r-edit': if (r) rgo('edit', r.id); return true;
+    case 'r-f': RS.f = el.dataset.v; drawPage(); return true;
+    case 'r-serv': RS.serv = Math.max(1, Math.min(50, RS.serv + +el.dataset.v)); drawPage(); return true;
+    case 'r-chk': { const i = +el.dataset.i; RS.chk.has(i) ? RS.chk.delete(i) : RS.chk.add(i); drawPage(); return true; }
+    case 'r-step': { const i = +el.dataset.i; RS.stp.has(i) ? RS.stp.delete(i) : RS.stp.add(i); if (r && RS.stp.size === lines(r.steps).length && RS.stp.has(i)) toast('Усі кроки готові — смачного! 😋'); drawPage(); return true; }
+    case 'r-fav': if (r) { r.fav = !r.fav; saveL(); drawPage(); } return true;
+    case 'r-cook': if (r) { r.cooked = (r.cooked | 0) + 1; r.last = k; saveL(); confetti(); toast('Смачного! 😋'); drawPage(); } return true;
+    case 'r-share': if (r) shareText(r.name, recText(r)); return true;
+    case 'r-del': if (r) confirmBox('Видалити рецепт?', `«${r.name}» зникне разом із фото.`, 'Видалити').then(y => { if (!y) return; L.recipes = L.recipes.filter(x => x.id !== r.id); saveL(); recImgDel(r.id).catch(() => { }); toast('Рецепт видалено'); history.back(); }); return true;
+    case 'r-buy': {
+      if (!r) return true;
+      const f = r.serv && RS.serv ? RS.serv / r.serv : 1, have = new Set(L.shop.filter(s => !s.done).map(s => s.text.toLowerCase()));
+      let n = 0;
+      lines(r.ing).forEach((x, i) => { if (RS.chk.has(i)) return; const t = scaleLine(x, f).slice(0, 120); if (have.has(t.toLowerCase())) return; have.add(t.toLowerCase()); L.shop.push({ id: uid(), text: t, done: false, from: r.name }); n++; });
+      saveL(); toast(n ? `Додано в покупки: ${n}` : 'Усе вже є в списку покупок'); return true;
+    }
+    case 'r-photo': rInput.click(); return true;
+    case 'r-nophoto': if (RS.draft) { RS.draft.img = ''; drawPage(); } return true;
+    case 'r-cat': if (RS.draft) { RS.draft.cat = el.dataset.v; drawPage(); } return true;
+    case 's-toggle': case 's-del': case 's-clear': {
+      const id = el.closest('[data-id]')?.dataset.id;
+      if (a === 's-toggle') { const s = L.shop.find(x => x.id === id); if (s) s.done = !s.done; }
+      if (a === 's-del') L.shop = L.shop.filter(x => x.id !== id);
+      if (a === 's-clear') L.shop = L.shop.filter(x => !x.done);
+      saveL(); drawPage(); return true;
+    }
+    case 's-share': { const t = L.shop.filter(s => !s.done).map(s => `• ${s.text}`).join('\n'); if (t) shareText('Список покупок', `🛒 Купити:\n${t}`); return true; }
+  }
+  return false;
+}
+document.addEventListener('input', e => {
+  const t = e.target;
+  if (t.dataset.rs !== undefined) { RS.q = t.value; drawPage(); }
+  if (t.dataset.rf && RS.draft) RS.draft[t.dataset.rf] = t.value;
+});
+
+PHDB.tx('rec', 'readonly', t => t.objectStore('rec').getAll())
+  .then(a => { (a || []).forEach(x => { if (x && typeof x.id === 'string' && typeof x.img === 'string') RP.set(x.id, x.img); }); if (RP.size && PAGE === 'recipes') drawPage(); })
   .catch(() => { });
 
 /* ================= start ================= */

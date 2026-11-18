@@ -560,7 +560,7 @@ async function exportAll(){const name=`notatky-${new Date().toISOString().slice(
  if(!n){saveFile(new File([base],name,{type:'application/json'}));return}
  toast('Готую копію разом із фото…');let parts;try{parts=await photoBackupParts()}catch(e){toast('Не вдалося підготувати фото');return}
  const file=new File([base.slice(0,-1),',"photos":[',...parts.flatMap((p,i)=>i?[',',p]:[p]),']}'],name,{type:'application/json'}),mb=(file.size/1048576).toFixed(1).replace('.',',');
- const w=sheet(()=>`<h3>Копія готова</h3><p class="note" style="font-size:15px">Усі дані, нотатки і фото дня (${n} шт.). Розмір файлу: ${mb} МБ.</p><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn pri" data-a="ok">Зберегти файл</button></div>`);
+ const w=sheet(()=>`<h3>Копія готова</h3><p class="note" style="font-size:15px">Усі дані, нотатки і фото (${n} шт.). Розмір файлу: ${mb} МБ.</p><div class="btns"><button class="btn" data-a="no">Скасувати</button><button class="btn pri" data-a="ok">Зберегти файл</button></div>`);
  w.addEventListener('click',e=>{const a=e.target.closest('[data-a]')?.dataset.a;if(a==='ok'){w.close();saveFile(file)}if(a==='no')w.close()})}
 $('#impFile').addEventListener('change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;try{const d=JSON.parse(await f.text());if(!d||d.app!=='notatky'||!Array.isArray(d.notes))throw 0;
  (Array.isArray(d.folders)?d.folders:[]).forEach(x=>{if(x&&x.id&&x.name&&!cfg.folders.some(y=>y.id===x.id))cfg.folders.push({id:String(x.id).replace(/[^\w-]/g,'').slice(0,40),name:String(x.name).slice(0,40)})});saveCfg();
